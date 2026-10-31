@@ -11,9 +11,11 @@
     },
     "Menu": {
       "Fechadura": "Lock (Gazua da Mesa)",
-      "Chave": "Key (Gazua da Mesa)"
+      "Chave": "Key / lockpick (Gazua da Mesa)"
     },
-    "HUD": { "Botao": "Locks in reach" },
+    "HUD": {
+      "Botao": "Locks in reach"
+    },
     "Opcao": {
       "anuncio": {
         "Nome": "Chat announcements",
@@ -37,6 +39,10 @@
       "botaoHUD": {
         "Nome": "Token HUD button",
         "Dica": "Shows the key button on the token HUD, which lists the locks in reach."
+      },
+      "ferramentasContam": {
+        "Nome": "Thieves' tools count as a lockpick",
+        "Dica": "Turn off so only the items you marked as lockpicks can pick locks."
       }
     },
     "Aviso": {
@@ -52,7 +58,8 @@
       "SoChave": "This lock only opens with its key.",
       "SemTentativas": "You can no longer try to pick this lock.",
       "ErroMacro": "The lock's macro failed. Check the console (F12).",
-      "Erro": "Something went wrong with the lock. Check the GM's console (F12)."
+      "Erro": "Something went wrong with the lock. Check the GM's console (F12).",
+      "GazuaQuebrou": "The lockpick \"{nome}\" broke."
     },
     "Chat": {
       "Alguem": "Someone",
@@ -72,34 +79,42 @@
       "SemChaves": "You have no keys.",
       "Mestra": "master key",
       "Usos": "{n} use(s)",
-      "Usar": "Use",
       "Arrombar": "Pick the lock",
-      "Teste": "Thieves' tools",
+      "Teste": "Simple lockpick",
       "CD": "DC",
-      "Minigame": "Use the lockpick",
+      "Minigame": "Lockpick minigame",
       "Esgotou": "You have tried too many times. This lock will not give way for you.",
-      "SemFerramentas": "You need thieves' tools.",
+      "SemFerramentas": "You need a lockpick.",
       "Restam": "Attempts left: {n}",
-      "FlavorTeste": "Pick the lock: {nome}"
+      "FlavorTeste": "Pick the lock: {nome}",
+      "NivelCurto": "Level {n}",
+      "UsarChave": "Use {chave}",
+      "TesteDica": "One thieves' tools check",
+      "Personagem": "Trying with {nome}",
+      "JogoSurpresa": "surprise minigame",
+      "MinigameComTeste": "Beat the DC, then face: {jogo}",
+      "TesteFalhou": "The lockpick didn't catch: the check missed the DC.",
+      "ComGazua": "Using: {nome}",
+      "GazuaUsos": "withstands {n} failure(s)"
     },
     "Gazua": {
-      "Titulo": "Lockpick",
-      "Pino": "Pin {n} of {total}",
-      "Vidas": "Lockpick durability",
-      "Dica": "Press Space (or the button) when the needle is on the green. Missing wears the lockpick down. Closing the window counts as a failure.",
-      "Levantar": "Set the pin",
-      "Desistir": "Give up",
-      "Abriu": "Click! The lock gave way.",
-      "Quebrou": "The lockpick slipped. The lock did not open."
+      "Item": {
+        "Titulo": "Lockpick",
+        "Bonus": "Bonus",
+        "BonusDica": "Added to the lockpicking check and gives +2 s in the minigame per point.",
+        "Usos": "Withstands",
+        "UsosDica": "How many failed attempts before it breaks. 0 = never breaks.",
+        "Salva": "\"{nome}\" is now a lockpick."
+      }
     },
-    "Proximas": { "Titulo": "Locks in reach" },
+    "Proximas": {
+      "Titulo": "Locks in reach"
+    },
     "Config": {
       "TituloFechadura": "Lock (Gazua da Mesa)",
-      "Fechadura": "Lock",
-      "Nome": "Name",
       "Trancada": "Locked",
-      "Nivel": "Level (1–10)",
-      "NivelDica": "Makes the minigame harder (more pins, faster needle) and limits which master keys open it.",
+      "Nivel": "Difficulty",
+      "NivelDica": "Makes the minigame harder (characters with a high bonus face an easier version) and limits which master keys open it.",
       "Segredos": "Secrets",
       "SegredosDica": "Comma-separated code words. Any key holding one of these secrets opens this lock. Reuse a secret on several locks so one key opens them all.",
       "Gerar": "Generate a secret",
@@ -109,32 +124,39 @@
       "NomeChave": "Key: {nome}",
       "ChaveCriada": "Item \"{nome}\" created in the Items tab.",
       "LembreSalvar": "Remember to save the lock so the secret takes effect.",
-      "SemChave": "Without the key",
-      "Modo": "How it can be opened",
+      "SemChave": "How to open without the key",
       "Modos": {
-        "ambos": "Check or minigame (player chooses)",
-        "minigame": "Lockpick minigame only",
-        "teste": "Thieves' tools check only",
+        "ambos": "Player chooses",
+        "minigame": "Lockpick minigame",
+        "teste": "Simple lockpick",
         "chave": "Key only"
       },
       "CD": "DC",
-      "CDDica": "Check difficulty. In the minigame, the higher the DC compared to the character's bonus, the smaller the green zone.",
-      "Ferramentas": "Requires thieves' tools",
+      "CDDica": "Check difficulty. A high bonus compared to the DC makes the minigame easier.",
+      "Ferramentas": "Requires a lockpick",
       "Tentativas": "Attempts per character",
       "TentativasDica": "How many failures each character may have before giving up on this lock. 0 = unlimited.",
       "ZerarFalhas": "reset failures",
       "Alcance": "Reach (squares)",
       "AlcanceDica": "Maximum distance from the token to the lock.",
-      "AoDestrancar": "When unlocked",
+      "AoDestrancar": "When unlocked (optional)",
       "AbrirPorta": "Open the door",
       "AbrirPortaDica": "Unchecked: the door only unlocks and the player opens it.",
       "Visibilidade": "This object",
       "VisibilidadeDica": "E.g. hide the closed-chest tile or reveal the open-chest tile.",
-      "Vis": { "nada": "No change", "mostrar": "Appears", "esconder": "Disappears" },
+      "Vis": {
+        "nada": "No change",
+        "mostrar": "Appears",
+        "esconder": "Disappears"
+      },
       "Permissao": "Permission",
       "PermissaoDicaToken": "Permission on the chest's actor for whoever opened it (Item Piles chests just unlock).",
       "PermissaoDicaDiario": "Permission on the journal for whoever opened it. Leave the journal without player permission: the key is what grants it.",
-      "Perm": { "nenhuma": "No change", "observador": "Observer", "dono": "Owner" },
+      "Perm": {
+        "nenhuma": "No change",
+        "observador": "Observer",
+        "dono": "Owner"
+      },
       "ParaTodos": "Grant to all players",
       "ParaTodosDica": "Permissions and revealed journals apply to everyone, not just whoever opened it.",
       "Gatilho": "Toggle the Map Navigator trigger",
@@ -149,23 +171,60 @@
       "Remover": "Remove lock",
       "Cancelar": "Cancel",
       "Salva": "Lock for \"{nome}\" saved.",
-      "Removida": "Lock removed."
+      "Removida": "Lock removed.",
+      "TrancadaDica": "Turn off to keep the lock configured but open.",
+      "ModosDica": {
+        "chave": "Nobody picks it. Only the right key (or a master key) opens it.",
+        "teste": "One thieves' tools check against the DC. Quick.",
+        "minigame": "The lock has an arcane ward: the player undoes it in a minigame, against the clock.",
+        "ambos": "Both options appear: check or minigame."
+      },
+      "Arrombar": "Lockpicking",
+      "NivelSaida": "Level {n}",
+      "FerramentasDica": "Without a lockpick item in the inventory, the character cannot try. Any item can become a lockpick via the sheet header menu.",
+      "ChavesSecao": "Keys and secrets",
+      "SegredosExemplo": "e.g. crypt, north-tower",
+      "MensagemExemplo": "e.g. The door creaks and a musty smell escapes…",
+      "SoChaveRemoto": "Journals only open with a key: give a key the same secret as this lock.",
+      "Minijogo": "Arcane minigame",
+      "JogoAleatorio": "Surprise",
+      "JogoAleatorioDica": "Picks one of the minigames at random on each attempt.",
+      "Tempo": "Time limit",
+      "TempoDica": "Seconds to finish the minigame. 0 = no limit.",
+      "TesteAntes": "Beat the DC to use the lockpick",
+      "TesteAntesDica": "Before the minigame, roll thieves' tools against the DC. On a failure there is no minigame; each point above the DC gives +2 s.",
+      "SoltarChave": "Drag any item here (from the Items tab or a character's inventory) to make it this lock's key.",
+      "SoItens": "Only items can become keys.",
+      "ImporteAntes": "Compendium items cannot be changed: import the item first.",
+      "ViraChave": "\"{nome}\" is now a key for this lock. Save the lock.",
+      "NenhumaChave": "No item opens this lock yet.",
+      "ComPersonagem": "with {nome}",
+      "NaAbaItens": "in the Items tab"
     },
     "Chave": {
-      "Titulo": "Key (Gazua da Mesa)",
-      "Segredos": "Secrets",
+      "Titulo": "Key or lockpick (Gazua da Mesa)",
+      "Segredos": "Secrets it opens",
       "SegredosDica": "Comma-separated. The key opens any lock holding one of these secrets.",
-      "Mestra": "Master key",
-      "MestraDica": "Not consumed when used, and opens locks even without the secret.",
       "NivelMax": "Opens up to level",
       "NivelMaxDica": "0 = any level.",
       "UsosMax": "Uses",
       "UsosMaxDica": "After this many uses it wears out and disappears. 0 = unlimited.",
       "Zerar": "reset ({n} used)",
-      "Gasta": "Regular keys leave the inventory when they open a lock (if there are several, one is spent).",
-      "Remover": "Stop being a key",
-      "Removida": "The item is no longer a key.",
-      "Salva": "Key \"{nome}\" saved."
+      "Remover": "Make it a regular item again",
+      "Removida": "The item is a regular item again.",
+      "Salva": "Key \"{nome}\" saved.",
+      "Tipo": {
+        "comum": "Regular key",
+        "mestra": "Master key",
+        "gazua": "Lockpick"
+      },
+      "TipoDica": {
+        "comum": "Opens locks with the same secret and leaves the inventory when used.",
+        "mestra": "Not consumed, and opens locks even without the secret, within the limits below.",
+        "gazua": "Used to pick locks. May give a bonus and break after a few failures."
+      },
+      "QueTipo": "What this item is",
+      "Limites": "Master key limits"
     },
     "Painel": {
       "Titulo": "Gazua da Mesa",
@@ -185,7 +244,87 @@
       "NovaChave": "New key",
       "NovaMestra": "New master key",
       "NomeNovaChave": "Key",
-      "NomeNovaMestra": "Master key"
+      "NomeNovaMestra": "Master key",
+      "NovaGazua": "New lockpick",
+      "NomeNovaGazua": "Lockpick"
+    },
+    "Jogo": {
+      "ComoJogar": "How to play",
+      "Resistencia": "Concentration",
+      "Desistir": "Give up",
+      "Tempo": "Time's up. The ward reformed.",
+      "Abriu": "The enchantment unravels. The lock opened!",
+      "Quebrou": "Your concentration broke. The ward held.",
+      "Desistiu": "You gave up.",
+      "discos": {
+        "Nome": "Runic rings",
+        "Resumo": "Turn the rings until each one's glowing rune sits under the sigil.",
+        "Comeco": "Bring each ring's glowing rune under the sigil at the top.",
+        "Passo1": "Click a ring to turn it right; right-click (or Shift) turns it left.",
+        "Passo2": "Some rings are bound by magic and drag their neighbour along. Hover to see which are linked.",
+        "Passo3": "With every rune under the sigil, the enchantment unravels. Keyboard: ↑ ↓ picks a ring, ← → turns it.",
+        "Esquerda": "Turn the ring left",
+        "Direita": "Turn the ring right",
+        "Alinhados": "{n} of {total} runes under the sigil.",
+        "Disco": "Ring {n} of {total}"
+      },
+      "runas": {
+        "Nome": "Runic seal",
+        "Resumo": "The seal lights a sequence of runes; touch them in the same order.",
+        "Comeco": "Get ready: the seal will show the sequence.",
+        "Passo1": "Watch the order in which the runes light up.",
+        "Passo2": "Then touch the runes in the same order (or use keys 1 to 8).",
+        "Passo3": "A mistake shakes your concentration and the seal shows the sequence again. At high levels, the order is reversed.",
+        "AoContrario": "reversed",
+        "Observe": "Watch…",
+        "Repita": "Your turn: touch the runes in the same order.",
+        "RepitaInvertido": "Your turn: touch the runes in <b>reverse</b> order.",
+        "Errou": "Wrong rune! The seal sparks back."
+      },
+      "labirinto": {
+        "Nome": "Mana thread",
+        "Resumo": "Guide a spark through the ward's invisible lines to its core.",
+        "Comeco": "The ward's lines are invisible: guide the spark to the core, on the right.",
+        "Passo1": "Move the spark with the arrows (or W A S D, or the buttons).",
+        "Passo2": "The barriers are invisible: each shock reveals one and shakes your concentration.",
+        "Passo3": "Reach the core on the right edge and push right to undo the ward.",
+        "Bateu": "Shock! A barrier reveals itself.",
+        "Perto": "The core pulses beside you. Push right!",
+        "Andando": "The mana flows…"
+      },
+      "sigilo": {
+        "Nome": "Sigil trace",
+        "Resumo": "Trace every line of the sigil without going over any line twice.",
+        "Comeco": "Pick a rune to start tracing the sigil.",
+        "Passo1": "Click a rune to start, then click runes linked to it to trace each line.",
+        "Passo2": "Each line can only be traced once. Moving where there is no line, or repeating one, shakes your concentration.",
+        "Passo3": "Tip: if a rune has an odd number of lines, start there. Stuck? The trace fades and you start over.",
+        "Comecou": "Now follow the lines without repeating any.",
+        "SemLinha": "There is no line between those runes!",
+        "Repetida": "That line is already traced!",
+        "Preso": "No way out! The trace fades.",
+        "Faltam": "{n} line(s) left.",
+        "Contagem": "{n} of {total} lines",
+        "Recomecar": "Start over"
+      },
+      "cristais": {
+        "Nome": "Crystals in harmony",
+        "Resumo": "Touching a crystal flips it and its neighbours; light them all.",
+        "Comeco": "Light every crystal at once.",
+        "Passo1": "Touching a crystal turns it and the crystals above, below and beside it on or off.",
+        "Passo2": "Get them all lit at the same time so the ward falls into harmony and opens.",
+        "Passo3": "Tip: touching the same crystal twice undoes it.",
+        "Contagem": "{n} of {total} lit · {toques} touch(es)"
+      },
+      "canalizar": {
+        "Nome": "Channel",
+        "Resumo": "Hold to raise the mana and keep it inside the runic band until the seal fills.",
+        "Comeco": "Keep the mana inside the runic band.",
+        "Passo1": "Hold the click (or Space) to raise the mana; let go and it falls.",
+        "Passo2": "The runic band moves. With the mana inside it, the seal fills; outside, it drains.",
+        "Passo3": "Fill the seal to 100% before time runs out.",
+        "Segurar": "Hold to channel (Space)"
+      }
     }
   }
 }

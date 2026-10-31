@@ -1,7 +1,7 @@
 // Gazua da Mesa — o que só o mestre pode fazer: trancar, destrancar, gastar chaves.
 // Os jogadores mandam pedidos por socket; o mestre ativo confere e executa.
 
-import { ID, SOCKET, t, esc, cfg, lerFechadura, lerChave, estaTrancada, chaveServe, nomeFechadura } from "./dados.js";
+import { ID, SOCKET, t, esc, cfg, lerFechadura, lerChave, lerGazua, estaTrancada, chaveServe, nomeFechadura } from "./dados.js";
 
 const ESTADO = () => CONST.WALL_DOOR_STATES;
 const NIVEL = () => CONST.DOCUMENT_OWNERSHIP_LEVELS;
@@ -190,6 +190,21 @@ async function gastarItem(item) {
   return item.delete();
 }
 
+/** Gazua com usos: cada falha gasta um; no fim ela quebra. */
+async function desgastarGazua(uuid, actor, userId) {
+  if (!uuid) return;
+  const item = await fromUuid(uuid);
+  const g = lerGazua(item);
+  if (!item || !g || !(g.usosMax > 0) || item.parent?.uuid !== actor?.uuid) return;
+  const usados = (g.usados ?? 0) + 1;
+  if (usados >= g.usosMax) {
+    await gastarItem(item);
+    avisar(userId, "Aviso.GazuaQuebrou", { nome: item.name }, "warn");
+  } else {
+    await item.update({ [`flags.${ID}.gazua.usados`]: usados });
+  }
+}
+
 // ---------- Pedidos ----------
 
 export async function processar(pedido, userId) {
@@ -230,6 +245,7 @@ export async function processar(pedido, userId) {
       const como = t(pedido.via === "minigame" ? "Chat.ComGazua" : "Chat.ComTeste");
       if (pedido.sucesso) return destrancar(doc, { actor, userId, como });
       if (actor) await doc.update({ [`flags.${ID}.fechadura.falhas.${actor.id}`]: falhas + 1 });
+      await desgastarGazua(pedido.gazuaUuid, actor, userId);
       await anunciar(`<i class="fa-solid fa-lock"></i> ${t("Chat.Falhou", { ator: esc(actor?.name ?? t("Chat.Alguem")), nome })}`, actor);
       return;
     }

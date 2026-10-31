@@ -17,6 +17,7 @@ Hooks.once("init", () => {
     choices: { todos: "GAZUAMESA.Opcao.anuncio.todos", mestre: "GAZUAMESA.Opcao.anuncio.mestre", nenhum: "GAZUAMESA.Opcao.anuncio.nenhum" }
   });
   reg("mostrarCD", { scope: "world", config: true, type: Boolean, default: false });
+  reg("ferramentasContam", { scope: "world", config: true, type: Boolean, default: true });
   reg("cliquePorta", { scope: "world", config: true, type: Boolean, default: true });
   reg("entrarRegiao", { scope: "world", config: true, type: Boolean, default: true });
   reg("botaoHUD", { scope: "world", config: true, type: Boolean, default: true });

@@ -2,10 +2,10 @@
 
 import {
   ID, t, esc, cfg, REMOTOS, lerFechadura, lerChave, estaTrancada, chaveServe, nomeFechadura, iconeTipo,
-  chavesDoAtor, ferramentasLadrao, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
+  chavesDoAtor, gazuaDoAtor, lerGazua, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
 } from "./dados.js";
 import { pedir } from "./mestre.js";
-import { Gazua, parametros } from "./minigame.js";
+import { jogar, escolherJogo, parametros, JOGOS } from "./jogos.js";
 
 const { ApplicationV2 } = foundry.applications.api;
 
@@ -37,7 +37,7 @@ export class JanelaFechadura extends ApplicationV2 {
   static DEFAULT_OPTIONS = {
     classes: ["gazua-mesa", "lp-janela"],
     window: { icon: "fa-solid fa-lock" },
-    position: { width: 400 },
+    position: { width: 420 },
     actions: {
       usarChave: JanelaFechadura.#usarChave,
       teste: JanelaFechadura.#teste,
@@ -65,55 +65,71 @@ export class JanelaFechadura extends ApplicationV2 {
     if (!f) return `<p class="lp-vazio">${t("Aviso.SemFechadura")}</p>`;
     const trancada = estaTrancada(doc, f);
     const nivel = Math.clamp(Number(f.nivel) || 1, 1, 10);
-    const pontos = Array.from({ length: 10 }, (_, i) => `<span class="${i < nivel ? "on" : ""}"></span>`).join("");
+    const remoto = REMOTOS.includes(doc.documentName);
 
-    let corpo = "";
+    const heroi = `
+      <div class="lp-heroi ${trancada ? "fechada" : "aberta"}">
+        <div class="lp-cadeado"><i class="fa-solid ${trancada ? "fa-lock" : "fa-lock-open"}"></i></div>
+        <div class="lp-heroi-txt">
+          <small><i class="fa-solid ${iconeTipo(doc.documentName)}"></i> ${t(`Tipo.${doc.documentName}`)}</small>
+          <strong>${esc(nomeFechadura(doc, f))}</strong>
+          <span class="lp-selo-estado">${t(trancada ? "Janela.Trancada" : "Janela.Aberta")}</span>
+        </div>
+        ${remoto ? "" : `<div class="lp-dificuldade" data-tooltip="${esc(t("Janela.Nivel", { n: nivel }))}">
+          <span>${t("Janela.NivelCurto", { n: nivel })}</span>
+          <div class="lp-nivel-barra"><div style="width:${nivel * 10}%"></div></div>
+        </div>`}
+      </div>`;
+
     if (!trancada) {
-      corpo = `<p class="lp-aberta"><i class="fa-solid fa-lock-open"></i> ${t("Janela.Destrancada")}</p>`;
-    } else {
-      // Chaves: o jogador experimenta qualquer uma; o mestre confere
-      const chaves = chavesDoAtor(actor);
-      const linhas = chaves.map(i => {
-        const c = lerChave(i);
-        const extra = c.mestra
-          ? `<em>${t("Janela.Mestra")}${c.usosMax > 0 ? ` · ${t("Janela.Usos", { n: c.usosMax - c.usados })}` : ""}</em>` : "";
-        return `<li><img src="${esc(i.img)}" alt=""><span>${esc(i.name)} ${extra}</span>
-          <button type="button" data-action="usarChave" data-item="${i.uuid}"><i class="fa-solid fa-key"></i> ${t("Janela.Usar")}</button></li>`;
-      }).join("");
-      corpo += `<h4><i class="fa-solid fa-key"></i> ${t("Janela.Chaves")}</h4>`;
-      corpo += linhas ? `<ul class="lp-chaves">${linhas}</ul>` : `<p class="lp-vazio">${t("Janela.SemChaves")}</p>`;
-
-      // Arrombar
-      if (f.modo !== "chave" && !REMOTOS.includes(doc.documentName)) {
-        const falhas = Number(f.falhas?.[actor?.id] ?? 0);
-        const esgotou = f.tentativas > 0 && falhas >= f.tentativas;
-        const semFerr = f.exigeFerramentas && !ferramentasLadrao(actor);
-        const bloqueio = esgotou ? t("Janela.Esgotou") : semFerr ? t("Janela.SemFerramentas") : "";
-        const dis = bloqueio || this.ocupado ? "disabled" : "";
-        const cd = cfg("mostrarCD") ? ` (${t("Janela.CD")} ${f.cd})` : "";
-        const botoes = [];
-        if (f.modo === "teste" || f.modo === "ambos") {
-          botoes.push(`<button type="button" data-action="teste" ${dis}><i class="fa-solid fa-dice-d20"></i> ${t("Janela.Teste")}${cd}</button>`);
-        }
-        if (f.modo === "minigame" || f.modo === "ambos") {
-          botoes.push(`<button type="button" data-action="minigame" ${dis}><i class="fa-solid fa-unlock-keyhole"></i> ${t("Janela.Minigame")}</button>`);
-        }
-        corpo += `<h4><i class="fa-solid fa-screwdriver"></i> ${t("Janela.Arrombar")}</h4><div class="lp-botoes">${botoes.join("")}</div>`;
-        if (bloqueio) corpo += `<p class="lp-bloqueio">${bloqueio}</p>`;
-        else if (f.tentativas > 0) corpo += `<p class="lp-dica">${t("Janela.Restam", { n: f.tentativas - falhas })}</p>`;
-      }
+      return `${heroi}<p class="lp-aberta"><i class="fa-solid fa-circle-check"></i> ${t("Janela.Destrancada")}</p>`;
     }
 
-    return `
-      <div class="lp-topo">
-        <i class="fa-solid ${iconeTipo(doc.documentName)}"></i>
-        <div>
-          <div class="lp-estado ${trancada ? "fechada" : "aberta"}">${t(trancada ? "Janela.Trancada" : "Janela.Aberta")}</div>
-          <div class="lp-nivel" data-tooltip="${esc(t("Janela.Nivel", { n: nivel }))}">${pontos}</div>
-        </div>
-        <span class="lp-quem">${esc(actor?.name ?? "")}</span>
-      </div>
-      ${corpo}`;
+    // Chaves: o jogador experimenta qualquer uma; o mestre confere
+    const chaves = chavesDoAtor(actor).map(i => {
+      const c = lerChave(i);
+      const extra = c.mestra
+        ? `<em><i class="fa-solid fa-crown"></i> ${t("Janela.Mestra")}${c.usosMax > 0 ? ` · ${t("Janela.Usos", { n: c.usosMax - c.usados })}` : ""}</em>` : "";
+      return `<button type="button" class="lp-chave" data-action="usarChave" data-item="${i.uuid}" data-tooltip="${esc(t("Janela.UsarChave", { chave: i.name }))}">
+          <img src="${esc(i.img)}" alt=""><span>${esc(i.name)}${extra}</span><i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </button>`;
+    }).join("");
+    let corpo = `<h4><i class="fa-solid fa-key"></i> ${t("Janela.Chaves")}</h4>`;
+    corpo += chaves ? `<div class="lp-chaves">${chaves}</div>` : `<p class="lp-vazio">${t("Janela.SemChaves")}</p>`;
+
+    // Arrombar
+    if (f.modo !== "chave" && !remoto) {
+      const falhas = Number(f.falhas?.[actor?.id] ?? 0);
+      const esgotou = f.tentativas > 0 && falhas >= f.tentativas;
+      const gazua = gazuaDoAtor(actor);
+      const semFerr = f.exigeFerramentas && !gazua;
+      const bloqueio = esgotou ? t("Janela.Esgotou") : semFerr ? t("Janela.SemFerramentas") : "";
+      const dis = bloqueio || this.ocupado ? "disabled" : "";
+      const cd = cfg("mostrarCD") ? ` · ${t("Janela.CD")} ${f.cd}` : "";
+      const acao = (acao, icone, titulo, sub) => `
+        <button type="button" class="lp-acao" data-action="${acao}" ${dis}>
+          <i class="fa-solid ${icone}"></i><span><b>${titulo}</b><small>${sub}</small></span>
+        </button>`;
+      const botoes = [];
+      if (f.modo === "teste" || f.modo === "ambos") botoes.push(acao("teste", "fa-dice-d20", t("Janela.Teste"), t("Janela.TesteDica") + cd));
+      if (f.modo === "minigame" || f.modo === "ambos") {
+        const jogo = JOGOS.includes(f.minijogo) ? t(`Jogo.${f.minijogo}.Nome`) : t("Janela.JogoSurpresa");
+        const tempo = f.tempo > 0 ? ` · ${f.tempo}s` : "";
+        const sub = (f.testeAntes ? t("Janela.MinigameComTeste", { jogo }) : jogo) + tempo;
+        botoes.push(acao("minigame", "fa-unlock-keyhole", t("Janela.Minigame"), sub));
+      }
+      corpo += `<h4><i class="fa-solid fa-screwdriver"></i> ${t("Janela.Arrombar")}</h4><div class="lp-acoes">${botoes.join("")}</div>`;
+      if (gazua && !bloqueio) {
+        const g = lerGazua(gazua);
+        const info = g ? [g.bonus > 0 ? `+${g.bonus}` : "", g.usosMax > 0 ? t("Janela.GazuaUsos", { n: g.usosMax - g.usados }) : ""].filter(Boolean).join(" · ") : "";
+        corpo += `<p class="lp-gazua-usada"><img src="${esc(gazua.img)}" alt=""> ${t("Janela.ComGazua", { nome: esc(gazua.name) })}${info ? ` <em>${info}</em>` : ""}</p>`;
+      }
+      if (bloqueio) corpo += `<p class="lp-bloqueio"><i class="fa-solid fa-ban"></i> ${bloqueio}</p>`;
+      else if (f.tentativas > 0) corpo += `<p class="lp-dica">${t("Janela.Restam", { n: f.tentativas - falhas })}</p>`;
+    }
+
+    const quem = actor ? `<p class="lp-quem"><img src="${esc(actor.img ?? "")}" alt=""> ${t("Janela.Personagem", { nome: esc(actor.name) })}</p>` : "";
+    return `${heroi}${corpo}${quem}`;
   }
 
   _replaceHTML(result, content) {
@@ -145,11 +161,14 @@ export class JanelaFechadura extends ApplicationV2 {
   static async #teste() {
     if (this.ocupado || !this.#conferir()) return;
     const f = lerFechadura(this.doc);
+    const gazua = gazuaDoAtor(this.actor);
+    const bonus = lerGazua(gazua)?.bonus ?? 0;
     this.ocupado = true;
     try {
-      const total = await rolarTeste(this.actor, f, nomeFechadura(this.doc, f));
-      if (total == null) return;
-      pedir({ tipo: "arrombar", via: "teste", uuid: this.doc.uuid, actorUuid: this.actor.uuid, sucesso: total >= Number(f.cd), total });
+      const rolado = await rolarTeste(this.actor, f, nomeFechadura(this.doc, f), bonus);
+      if (rolado == null) return;
+      const total = rolado + bonus;
+      pedir({ tipo: "arrombar", via: "teste", uuid: this.doc.uuid, actorUuid: this.actor.uuid, gazuaUuid: gazua?.uuid, sucesso: total >= Number(f.cd), total });
     } finally {
       this.ocupado = false;
       if (this.rendered) this.render();
@@ -159,11 +178,27 @@ export class JanelaFechadura extends ApplicationV2 {
   static async #minigame() {
     if (this.ocupado || !this.#conferir()) return;
     const f = lerFechadura(this.doc);
+    const gazua = gazuaDoAtor(this.actor);
+    const bonusGazua = lerGazua(gazua)?.bonus ?? 0;
+    const nome = nomeFechadura(this.doc, f);
+    const base = { uuid: this.doc.uuid, actorUuid: this.actor.uuid, gazuaUuid: gazua?.uuid };
     this.ocupado = true;
     this.render();
     try {
-      const sucesso = await Gazua.jogar({ parametros: parametros(f, this.actor), nome: nomeFechadura(this.doc, f) });
-      if (estaTrancada(this.doc)) pedir({ tipo: "arrombar", via: "minigame", uuid: this.doc.uuid, actorUuid: this.actor.uuid, sucesso });
+      // Primeiro a CD: só quem passa consegue trabalhar a fechadura com a gazua
+      let margem = 0;
+      if (f.testeAntes) {
+        const rolado = await rolarTeste(this.actor, f, nome, bonusGazua);
+        if (rolado == null) return;
+        const total = rolado + bonusGazua;
+        if (total < Number(f.cd)) {
+          ui.notifications.warn(t("Janela.TesteFalhou"));
+          return pedir({ ...base, tipo: "arrombar", via: "teste", sucesso: false, total });
+        }
+        margem = total - Number(f.cd);
+      }
+      const sucesso = await jogar(escolherJogo(f), { parametros: parametros(f, this.actor, { margem, bonusGazua }), nome });
+      if (estaTrancada(this.doc)) pedir({ ...base, tipo: "arrombar", via: "minigame", sucesso });
     } finally {
       this.ocupado = false;
       if (this.rendered) this.render();
@@ -172,7 +207,7 @@ export class JanelaFechadura extends ApplicationV2 {
 }
 
 /** Teste de ferramentas de ladrão. Usa a rolagem do D&D 5e quando dá; senão, d20 + Destreza. */
-export async function rolarTeste(actor, f, nome) {
+export async function rolarTeste(actor, f, nome, bonus = 0) {
   if (typeof actor.rollToolCheck === "function" && actor.system?.tools?.thief) {
     try {
       const r = await actor.rollToolCheck({ tool: "thief", target: Number(f.cd) });
@@ -182,6 +217,7 @@ export async function rolarTeste(actor, f, nome) {
       console.warn(`${ID} | rollToolCheck falhou, usando rolagem simples`, e);
     }
   }
+  // sem a rolagem do sistema: d20 + Destreza (o bônus da gazua entra depois, no total)
   const mod = Number(actor.system?.abilities?.dex?.mod) || 0;
   const roll = await new Roll("1d20 + @mod", { mod }).evaluate();
   await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: t("Janela.FlavorTeste", { nome: esc(nome) }) });

@@ -15,8 +15,11 @@ export const PADRAO_FECHADURA = {
   nivel: 1,
   segredos: "",
   modo: "ambos",          // ambos | minigame | teste | chave
+  minijogo: "aleatorio",  // aleatorio | discos | runas | labirinto
+  tempo: 40,              // segundos do minijogo (0 = sem limite)
+  testeAntes: true,       // passar na CD para poder jogar o minijogo
   cd: 15,
-  exigeFerramentas: true,
+  exigeFerramentas: true, // exige uma gazua no inventário
   aceitaMestra: true,
   tentativas: 0,          // falhas permitidas por personagem (0 = sem limite)
   alcance: 1,             // em casas
@@ -38,6 +41,13 @@ export const PADRAO_CHAVE = {
   mestra: false,
   nivelMax: 0,            // mestra: abre fechaduras até este nível (0 = qualquer)
   usosMax: 0,             // mestra: usos antes de se desgastar (0 = sem limite)
+  usados: 0
+};
+
+export const PADRAO_GAZUA = {
+  ativa: true,
+  bonus: 0,               // soma no teste e dá +2 s por ponto no minijogo
+  usosMax: 0,             // falhas que aguenta antes de quebrar (0 = não quebra)
   usados: 0
 };
 
@@ -67,6 +77,12 @@ export function lerChave(item) {
   const bruto = item?.flags?.[ID]?.chave;
   if (!bruto || bruto.ativa === false) return null;
   return foundry.utils.mergeObject(foundry.utils.deepClone(PADRAO_CHAVE), bruto, { inplace: false });
+}
+
+export function lerGazua(item) {
+  const bruto = item?.flags?.[ID]?.gazua;
+  if (!bruto || bruto.ativa === false) return null;
+  return foundry.utils.mergeObject(foundry.utils.deepClone(PADRAO_GAZUA), bruto, { inplace: false });
 }
 
 export function estaTrancada(doc, f = lerFechadura(doc)) {
@@ -114,9 +130,19 @@ export function chavesDoAtor(actor) {
   return (actor?.items?.contents ?? []).filter(i => lerChave(i));
 }
 
-export function ferramentasLadrao(actor) {
-  return (actor?.items?.contents ?? []).find(i => i.type === "tool"
-    && (i.system?.type?.baseItem === "thief" || /thie|ladr/i.test(i.name)));
+/** As gazuas do personagem: itens marcados pelo mestre e, se a opção deixar, ferramentas de ladrão. */
+export function gazuasDoAtor(actor) {
+  const itens = actor?.items?.contents ?? [];
+  const marcadas = itens.filter(i => lerGazua(i));
+  const ferramentas = cfg("ferramentasContam")
+    ? itens.filter(i => !lerGazua(i) && i.type === "tool" && (i.system?.type?.baseItem === "thief" || /thie|ladr/i.test(i.name)))
+    : [];
+  return [...marcadas, ...ferramentas];
+}
+
+/** A melhor gazua do personagem (a de maior bônus). */
+export function gazuaDoAtor(actor) {
+  return gazuasDoAtor(actor).sort((a, b) => (lerGazua(b)?.bonus ?? 0) - (lerGazua(a)?.bonus ?? 0))[0] ?? null;
 }
 
 /** Bônus de arrombar (Destreza + proficiência em ferramentas de ladrão, se houver). */

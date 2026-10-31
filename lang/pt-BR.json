@@ -11,9 +11,11 @@
     },
     "Menu": {
       "Fechadura": "Fechadura (Gazua da Mesa)",
-      "Chave": "Chave (Gazua da Mesa)"
+      "Chave": "Chave / gazua (Gazua da Mesa)"
     },
-    "HUD": { "Botao": "Fechaduras ao alcance" },
+    "HUD": {
+      "Botao": "Fechaduras ao alcance"
+    },
     "Opcao": {
       "anuncio": {
         "Nome": "Avisar no chat",
@@ -37,6 +39,10 @@
       "botaoHUD": {
         "Nome": "Botão no HUD do token",
         "Dica": "Mostra o botão de chave no HUD do token, que lista as fechaduras ao alcance."
+      },
+      "ferramentasContam": {
+        "Nome": "Ferramentas de Ladrão contam como gazua",
+        "Dica": "Desligue para que só os itens que você marcou como gazua sirvam para arrombar."
       }
     },
     "Aviso": {
@@ -52,7 +58,8 @@
       "SoChave": "Esta fechadura só abre com a chave.",
       "SemTentativas": "Você não consegue mais tentar arrombar esta fechadura.",
       "ErroMacro": "A macro da fechadura falhou. Veja o console (F12).",
-      "Erro": "Algo deu errado com a fechadura. Veja o console do mestre (F12)."
+      "Erro": "Algo deu errado com a fechadura. Veja o console do mestre (F12).",
+      "GazuaQuebrou": "A gazua \"{nome}\" quebrou."
     },
     "Chat": {
       "Alguem": "Alguém",
@@ -72,34 +79,42 @@
       "SemChaves": "Você não tem chaves.",
       "Mestra": "chave mestra",
       "Usos": "{n} uso(s)",
-      "Usar": "Usar",
       "Arrombar": "Arrombar",
-      "Teste": "Ferramentas de ladrão",
+      "Teste": "Gazua simples",
       "CD": "CD",
-      "Minigame": "Usar a gazua",
+      "Minigame": "Gazua com minijogo",
       "Esgotou": "Você já tentou demais. Esta fechadura não cede para você.",
-      "SemFerramentas": "Você precisa de ferramentas de ladrão.",
+      "SemFerramentas": "Você precisa de uma gazua.",
       "Restam": "Tentativas restantes: {n}",
-      "FlavorTeste": "Arrombar: {nome}"
+      "FlavorTeste": "Arrombar: {nome}",
+      "NivelCurto": "Nível {n}",
+      "UsarChave": "Usar {chave}",
+      "TesteDica": "Um teste de Ferramentas de Ladrão",
+      "Personagem": "Tentando com {nome}",
+      "JogoSurpresa": "minijogo surpresa",
+      "MinigameComTeste": "Passe na CD e encare: {jogo}",
+      "TesteFalhou": "A gazua não pegou: o teste não alcançou a CD.",
+      "ComGazua": "Usando: {nome}",
+      "GazuaUsos": "aguenta {n} falha(s)"
     },
     "Gazua": {
-      "Titulo": "Gazua",
-      "Pino": "Pino {n} de {total}",
-      "Vidas": "Resistência da gazua",
-      "Dica": "Aperte Espaço (ou o botão) quando a agulha estiver no verde. Errar desgasta a gazua. Fechar a janela conta como falha.",
-      "Levantar": "Levantar o pino",
-      "Desistir": "Desistir",
-      "Abriu": "Clique! A fechadura cedeu.",
-      "Quebrou": "A gazua escapou. A fechadura não abriu."
+      "Item": {
+        "Titulo": "Gazua",
+        "Bonus": "Bônus",
+        "BonusDica": "Soma no teste de arrombar e dá +2 s no minijogo por ponto.",
+        "Usos": "Aguenta",
+        "UsosDica": "Quantas tentativas fracassadas antes de quebrar. 0 = não quebra.",
+        "Salva": "\"{nome}\" agora é uma gazua."
+      }
     },
-    "Proximas": { "Titulo": "Fechaduras ao alcance" },
+    "Proximas": {
+      "Titulo": "Fechaduras ao alcance"
+    },
     "Config": {
       "TituloFechadura": "Fechadura (Gazua da Mesa)",
-      "Fechadura": "Fechadura",
-      "Nome": "Nome",
       "Trancada": "Trancada",
-      "Nivel": "Nível (1–10)",
-      "NivelDica": "Deixa o minigame mais difícil (mais pinos, agulha mais rápida) e limita quais chaves mestras abrem.",
+      "Nivel": "Dificuldade",
+      "NivelDica": "Deixa o minijogo mais difícil (personagens com bônus alto enfrentam uma versão mais fácil) e limita quais chaves mestras abrem.",
       "Segredos": "Segredos",
       "SegredosDica": "Palavras-código separadas por vírgula. Qualquer chave que tenha um destes segredos abre esta fechadura. Use o mesmo segredo em várias fechaduras para uma chave abrir todas.",
       "Gerar": "Gerar um segredo",
@@ -109,32 +124,39 @@
       "NomeChave": "Chave: {nome}",
       "ChaveCriada": "Item \"{nome}\" criado na aba de Itens.",
       "LembreSalvar": "Não esqueça de salvar a fechadura para o segredo valer.",
-      "SemChave": "Sem a chave",
-      "Modo": "Como dá para abrir",
+      "SemChave": "Como abrir sem a chave",
       "Modos": {
-        "ambos": "Teste ou minigame (o jogador escolhe)",
-        "minigame": "Só o minigame da gazua",
-        "teste": "Só o teste de ferramentas de ladrão",
-        "chave": "Só com a chave"
+        "ambos": "O jogador escolhe",
+        "minigame": "Gazua com minijogo",
+        "teste": "Gazua simples",
+        "chave": "Só a chave"
       },
       "CD": "CD",
-      "CDDica": "Dificuldade do teste. No minigame, quanto maior a CD em relação ao bônus do personagem, menor a área verde.",
-      "Ferramentas": "Exige ferramentas de ladrão",
+      "CDDica": "Dificuldade do teste. Um bônus alto em relação à CD deixa o minijogo mais fácil.",
+      "Ferramentas": "Exige uma gazua",
       "Tentativas": "Tentativas por personagem",
       "TentativasDica": "Quantas falhas cada personagem pode ter antes de desistir desta fechadura. 0 = sem limite.",
       "ZerarFalhas": "zerar as falhas",
       "Alcance": "Alcance (casas)",
       "AlcanceDica": "Distância máxima do token até a fechadura.",
-      "AoDestrancar": "Ao destrancar",
+      "AoDestrancar": "Ao destrancar (opcional)",
       "AbrirPorta": "Abrir a porta",
       "AbrirPortaDica": "Desmarcado: a porta só destranca e o jogador abre.",
       "Visibilidade": "Este objeto",
       "VisibilidadeDica": "Ex.: esconder o tile do baú fechado ou mostrar o tile do baú aberto.",
-      "Vis": { "nada": "Não muda", "mostrar": "Aparece", "esconder": "Some" },
+      "Vis": {
+        "nada": "Não muda",
+        "mostrar": "Aparece",
+        "esconder": "Some"
+      },
       "Permissao": "Permissão",
       "PermissaoDicaToken": "Permissão no ator do baú para quem abriu (baús do Item Piles só destrancam).",
       "PermissaoDicaDiario": "Permissão no diário para quem abriu. Deixe o diário sem permissão para os jogadores: a chave é o que libera.",
-      "Perm": { "nenhuma": "Não muda", "observador": "Observador", "dono": "Dono" },
+      "Perm": {
+        "nenhuma": "Não muda",
+        "observador": "Observador",
+        "dono": "Dono"
+      },
       "ParaTodos": "Liberar para todos os jogadores",
       "ParaTodosDica": "Permissões e diários revelados valem para todos, não só para quem abriu.",
       "Gatilho": "Ligar o gatilho do Navegador de Mapas",
@@ -149,23 +171,60 @@
       "Remover": "Remover fechadura",
       "Cancelar": "Cancelar",
       "Salva": "Fechadura de \"{nome}\" salva.",
-      "Removida": "Fechadura removida."
+      "Removida": "Fechadura removida.",
+      "TrancadaDica": "Desligue para deixar a fechadura configurada, mas aberta.",
+      "ModosDica": {
+        "chave": "Ninguém arromba. Só abre com a chave certa (ou uma mestra).",
+        "teste": "Um teste de Ferramentas de Ladrão contra a CD. Rápido.",
+        "minigame": "A fechadura tem uma proteção arcana: o jogador a desfaz num minijogo, com tempo limite.",
+        "ambos": "Aparecem as duas opções: teste ou minijogo."
+      },
+      "Arrombar": "Arrombar",
+      "NivelSaida": "Nível {n}",
+      "FerramentasDica": "Sem um item de gazua no inventário, o personagem não consegue tentar. Qualquer item vira gazua pelo menu do cabeçalho da ficha.",
+      "ChavesSecao": "Chaves e segredos",
+      "SegredosExemplo": "ex.: cripta, torre-norte",
+      "MensagemExemplo": "ex.: A porta range e um cheiro de mofo escapa…",
+      "SoChaveRemoto": "Diários só abrem com chave: dê a uma chave o mesmo segredo desta fechadura.",
+      "Minijogo": "Minijogo arcano",
+      "JogoAleatorio": "Surpresa",
+      "JogoAleatorioDica": "Sorteia um dos minijogos a cada tentativa.",
+      "Tempo": "Tempo limite",
+      "TempoDica": "Segundos para terminar o minijogo. 0 = sem limite.",
+      "TesteAntes": "Passar na CD para usar a gazua",
+      "TesteAntesDica": "Antes do minijogo, rola Ferramentas de Ladrão contra a CD. Quem falha não chega a jogar; cada ponto acima da CD dá +2 s.",
+      "SoltarChave": "Arraste para cá qualquer item (da aba de Itens ou do inventário de um personagem) para ele virar a chave desta fechadura.",
+      "SoItens": "Só itens podem virar chave.",
+      "ImporteAntes": "Itens de compêndio não podem ser alterados: importe o item primeiro.",
+      "ViraChave": "\"{nome}\" agora é uma chave desta fechadura. Salve a fechadura.",
+      "NenhumaChave": "Nenhum item abre esta fechadura ainda.",
+      "ComPersonagem": "com {nome}",
+      "NaAbaItens": "na aba de Itens"
     },
     "Chave": {
-      "Titulo": "Chave (Gazua da Mesa)",
-      "Segredos": "Segredos",
+      "Titulo": "Chave ou gazua (Gazua da Mesa)",
+      "Segredos": "Segredos que ela abre",
       "SegredosDica": "Separados por vírgula. A chave abre qualquer fechadura que tenha um destes segredos.",
-      "Mestra": "Chave mestra",
-      "MestraDica": "Não é gasta ao usar e abre fechaduras mesmo sem o segredo.",
       "NivelMax": "Abre até o nível",
       "NivelMaxDica": "0 = qualquer nível.",
       "UsosMax": "Usos",
       "UsosMaxDica": "Depois de tantos usos ela se desgasta e some. 0 = sem limite.",
       "Zerar": "zerar ({n} usada(s))",
-      "Gasta": "Chaves comuns somem do inventário quando abrem uma fechadura (se houver várias, gasta uma).",
-      "Remover": "Deixar de ser chave",
-      "Removida": "O item não é mais uma chave.",
-      "Salva": "Chave \"{nome}\" salva."
+      "Remover": "Voltar a ser um item comum",
+      "Removida": "O item voltou a ser comum.",
+      "Salva": "Chave \"{nome}\" salva.",
+      "Tipo": {
+        "comum": "Chave comum",
+        "mestra": "Chave mestra",
+        "gazua": "Gazua"
+      },
+      "TipoDica": {
+        "comum": "Abre as fechaduras com o mesmo segredo e some do inventário ao ser usada.",
+        "mestra": "Não é gasta e abre fechaduras mesmo sem o segredo, dentro dos limites abaixo.",
+        "gazua": "Serve para arrombar fechaduras. Pode dar bônus e quebrar depois de algumas falhas."
+      },
+      "QueTipo": "O que este item é",
+      "Limites": "Limites da chave mestra"
     },
     "Painel": {
       "Titulo": "Gazua da Mesa",
@@ -185,7 +244,87 @@
       "NovaChave": "Nova chave",
       "NovaMestra": "Nova chave mestra",
       "NomeNovaChave": "Chave",
-      "NomeNovaMestra": "Chave mestra"
+      "NomeNovaMestra": "Chave mestra",
+      "NovaGazua": "Nova gazua",
+      "NomeNovaGazua": "Gazua"
+    },
+    "Jogo": {
+      "ComoJogar": "Como jogar",
+      "Resistencia": "Concentração",
+      "Desistir": "Desistir",
+      "Tempo": "O tempo acabou. A proteção se refez.",
+      "Abriu": "O encantamento se desfaz. A fechadura abriu!",
+      "Quebrou": "Sua concentração se rompeu. A proteção resistiu.",
+      "Desistiu": "Você desistiu.",
+      "discos": {
+        "Nome": "Anéis rúnicos",
+        "Resumo": "Gire os anéis até a runa brilhante de cada um ficar sob o sigilo.",
+        "Comeco": "Leve a runa brilhante de cada anel até o sigilo no topo.",
+        "Passo1": "Clique num anel para girá-lo para a direita; clique direito (ou Shift) gira para a esquerda.",
+        "Passo2": "Alguns anéis estão presos por magia e arrastam o vizinho junto. Passe o mouse para ver quem está ligado.",
+        "Passo3": "Com todas as runas sob o sigilo, o encantamento se desfaz. No teclado: ↑ ↓ escolhe o anel, ← → gira.",
+        "Esquerda": "Girar o anel para a esquerda",
+        "Direita": "Girar o anel para a direita",
+        "Alinhados": "{n} de {total} runas sob o sigilo.",
+        "Disco": "Anel {n} de {total}"
+      },
+      "runas": {
+        "Nome": "Selo rúnico",
+        "Resumo": "O selo acende uma sequência de runas; toque-as na mesma ordem.",
+        "Comeco": "Prepare-se: o selo vai mostrar a sequência.",
+        "Passo1": "Observe a ordem em que as runas acendem.",
+        "Passo2": "Depois toque as runas na mesma ordem (ou use as teclas 1 a 8).",
+        "Passo3": "Errar abala a concentração e o selo mostra a sequência de novo. Em níveis altos, a ordem é ao contrário.",
+        "AoContrario": "ao contrário",
+        "Observe": "Observe…",
+        "Repita": "Sua vez: toque as runas na mesma ordem.",
+        "RepitaInvertido": "Sua vez: toque as runas na ordem <b>inversa</b>.",
+        "Errou": "Runa errada! O selo reage com uma faísca."
+      },
+      "labirinto": {
+        "Nome": "Fio de mana",
+        "Resumo": "Conduza uma centelha pelas linhas invisíveis da proteção até o núcleo.",
+        "Comeco": "As linhas da proteção são invisíveis: conduza a centelha até o núcleo, à direita.",
+        "Passo1": "Mova a centelha com as setas (ou W A S D, ou os botões).",
+        "Passo2": "As barreiras são invisíveis: cada choque revela uma e abala a concentração.",
+        "Passo3": "Chegue ao núcleo na borda direita e empurre para a direita para desfazer a proteção.",
+        "Bateu": "Choque! Uma barreira se revela.",
+        "Perto": "O núcleo pulsa ao seu lado. Empurre para a direita!",
+        "Andando": "A mana flui…"
+      },
+      "sigilo": {
+        "Nome": "Sigilo de traço",
+        "Resumo": "Trace todas as linhas do sigilo sem passar duas vezes pela mesma.",
+        "Comeco": "Escolha uma runa para começar a traçar o sigilo.",
+        "Passo1": "Clique numa runa para começar e depois em runas ligadas a ela para traçar cada linha.",
+        "Passo2": "Cada linha só pode ser traçada uma vez. Seguir por onde não há linha, ou repetir uma, abala a concentração.",
+        "Passo3": "Dica: se alguma runa tiver um número ímpar de linhas, comece por ela. Ficou sem saída? O traço se apaga e você recomeça.",
+        "Comecou": "Agora siga pelas linhas, sem repetir nenhuma.",
+        "SemLinha": "Não há linha entre essas runas!",
+        "Repetida": "Essa linha já foi traçada!",
+        "Preso": "Sem saída! O traço se apaga.",
+        "Faltam": "Faltam {n} linha(s).",
+        "Contagem": "{n} de {total} linhas",
+        "Recomecar": "Recomeçar"
+      },
+      "cristais": {
+        "Nome": "Cristais em harmonia",
+        "Resumo": "Tocar um cristal inverte ele e os vizinhos; acenda todos.",
+        "Comeco": "Acenda todos os cristais ao mesmo tempo.",
+        "Passo1": "Tocar um cristal acende ou apaga ele e os cristais acima, abaixo e dos lados.",
+        "Passo2": "Deixe todos acesos ao mesmo tempo para a proteção entrar em harmonia e se abrir.",
+        "Passo3": "Dica: tocar duas vezes no mesmo cristal desfaz o toque.",
+        "Contagem": "{n} de {total} acesos · {toques} toque(s)"
+      },
+      "canalizar": {
+        "Nome": "Canalizar",
+        "Resumo": "Segure para erguer a mana e mantenha-a dentro da faixa rúnica até encher o selo.",
+        "Comeco": "Mantenha a mana dentro da faixa rúnica.",
+        "Passo1": "Segure o clique (ou Espaço) para a mana subir; solte e ela desce.",
+        "Passo2": "A faixa rúnica se move. Com a mana dentro dela, o selo enche; fora, ele esvazia.",
+        "Passo3": "Encha o selo até 100% antes do tempo acabar.",
+        "Segurar": "Segurar para canalizar (Espaço)"
+      }
     }
   }
 }
