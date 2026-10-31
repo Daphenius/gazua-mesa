@@ -1,0 +1,191 @@
+{
+  "GAZUAMESA": {
+    "Tipo": {
+      "Wall": "Door",
+      "Token": "Chest / token",
+      "Tile": "Tile",
+      "Region": "Region / portal",
+      "Note": "Map note",
+      "JournalEntry": "Journal",
+      "JournalEntryPage": "Journal page"
+    },
+    "Menu": {
+      "Fechadura": "Lock (Gazua da Mesa)",
+      "Chave": "Key (Gazua da Mesa)"
+    },
+    "HUD": { "Botao": "Locks in reach" },
+    "Opcao": {
+      "anuncio": {
+        "Nome": "Chat announcements",
+        "Dica": "Who sees the messages for opened locks and failed attempts.",
+        "todos": "Everyone",
+        "mestre": "GM only",
+        "nenhum": "Nobody"
+      },
+      "mostrarCD": {
+        "Nome": "Show the DC to players",
+        "Dica": "Shown on the thieves' tools check button."
+      },
+      "cliquePorta": {
+        "Nome": "Clicking a locked door opens the lock",
+        "Dica": "When a player clicks the icon of a locked door that has a lock, the window to use a key or pick the lock opens."
+      },
+      "entrarRegiao": {
+        "Nome": "Entering a locked region opens the lock",
+        "Dica": "When the player's token stops inside a locked region (a portal, for example), the lock window appears."
+      },
+      "botaoHUD": {
+        "Nome": "Token HUD button",
+        "Dica": "Shows the key button on the token HUD, which lists the locks in reach."
+      }
+    },
+    "Aviso": {
+      "SemMestre": "The lock needs a GM connected.",
+      "SemToken": "Select your token first.",
+      "Longe": "You are too far from that lock.",
+      "NadaPerto": "No locked lock in reach.",
+      "NaoServe": "The key \"{chave}\" does not fit this lock.",
+      "SemFechadura": "This no longer has a lock.",
+      "JaAberta": "It is already unlocked.",
+      "ChaveSumiu": "The character no longer has that key.",
+      "MestraGasta": "The key \"{chave}\" wore out and broke after this use.",
+      "SoChave": "This lock only opens with its key.",
+      "SemTentativas": "You can no longer try to pick this lock.",
+      "ErroMacro": "The lock's macro failed. Check the console (F12).",
+      "Erro": "Something went wrong with the lock. Check the GM's console (F12)."
+    },
+    "Chat": {
+      "Alguem": "Someone",
+      "Destrancou": "<strong>{ator}</strong> unlocked <strong>{nome}</strong> {como}.",
+      "DestrancouSimples": "<strong>{nome}</strong> was unlocked.",
+      "ComChave": "with the key <em>{chave}</em>",
+      "ComGazua": "with a lockpick",
+      "ComTeste": "with thieves' tools",
+      "Falhou": "<strong>{ator}</strong> failed to pick <strong>{nome}</strong>."
+    },
+    "Janela": {
+      "Trancada": "Locked",
+      "Aberta": "Unlocked",
+      "Destrancada": "This lock is unlocked.",
+      "Nivel": "Level {n} of 10",
+      "Chaves": "Your keys",
+      "SemChaves": "You have no keys.",
+      "Mestra": "master key",
+      "Usos": "{n} use(s)",
+      "Usar": "Use",
+      "Arrombar": "Pick the lock",
+      "Teste": "Thieves' tools",
+      "CD": "DC",
+      "Minigame": "Use the lockpick",
+      "Esgotou": "You have tried too many times. This lock will not give way for you.",
+      "SemFerramentas": "You need thieves' tools.",
+      "Restam": "Attempts left: {n}",
+      "FlavorTeste": "Pick the lock: {nome}"
+    },
+    "Gazua": {
+      "Titulo": "Lockpick",
+      "Pino": "Pin {n} of {total}",
+      "Vidas": "Lockpick durability",
+      "Dica": "Press Space (or the button) when the needle is on the green. Missing wears the lockpick down. Closing the window counts as a failure.",
+      "Levantar": "Set the pin",
+      "Desistir": "Give up",
+      "Abriu": "Click! The lock gave way.",
+      "Quebrou": "The lockpick slipped. The lock did not open."
+    },
+    "Proximas": { "Titulo": "Locks in reach" },
+    "Config": {
+      "TituloFechadura": "Lock (Gazua da Mesa)",
+      "Fechadura": "Lock",
+      "Nome": "Name",
+      "Trancada": "Locked",
+      "Nivel": "Level (1–10)",
+      "NivelDica": "Makes the minigame harder (more pins, faster needle) and limits which master keys open it.",
+      "Segredos": "Secrets",
+      "SegredosDica": "Comma-separated code words. Any key holding one of these secrets opens this lock. Reuse a secret on several locks so one key opens them all.",
+      "Gerar": "Generate a secret",
+      "Mestra": "Accepts master keys",
+      "MestraDica": "Uncheck for special locks (a magic seal, for example) that only open with the right key.",
+      "CriarChave": "Create a key for this lock",
+      "NomeChave": "Key: {nome}",
+      "ChaveCriada": "Item \"{nome}\" created in the Items tab.",
+      "LembreSalvar": "Remember to save the lock so the secret takes effect.",
+      "SemChave": "Without the key",
+      "Modo": "How it can be opened",
+      "Modos": {
+        "ambos": "Check or minigame (player chooses)",
+        "minigame": "Lockpick minigame only",
+        "teste": "Thieves' tools check only",
+        "chave": "Key only"
+      },
+      "CD": "DC",
+      "CDDica": "Check difficulty. In the minigame, the higher the DC compared to the character's bonus, the smaller the green zone.",
+      "Ferramentas": "Requires thieves' tools",
+      "Tentativas": "Attempts per character",
+      "TentativasDica": "How many failures each character may have before giving up on this lock. 0 = unlimited.",
+      "ZerarFalhas": "reset failures",
+      "Alcance": "Reach (squares)",
+      "AlcanceDica": "Maximum distance from the token to the lock.",
+      "AoDestrancar": "When unlocked",
+      "AbrirPorta": "Open the door",
+      "AbrirPortaDica": "Unchecked: the door only unlocks and the player opens it.",
+      "Visibilidade": "This object",
+      "VisibilidadeDica": "E.g. hide the closed-chest tile or reveal the open-chest tile.",
+      "Vis": { "nada": "No change", "mostrar": "Appears", "esconder": "Disappears" },
+      "Permissao": "Permission",
+      "PermissaoDicaToken": "Permission on the chest's actor for whoever opened it (Item Piles chests just unlock).",
+      "PermissaoDicaDiario": "Permission on the journal for whoever opened it. Leave the journal without player permission: the key is what grants it.",
+      "Perm": { "nenhuma": "No change", "observador": "Observer", "dono": "Owner" },
+      "ParaTodos": "Grant to all players",
+      "ParaTodosDica": "Permissions and revealed journals apply to everyone, not just whoever opened it.",
+      "Gatilho": "Toggle the Map Navigator trigger",
+      "GatilhoDica": "While locked, this object's trigger stays disabled.",
+      "Journal": "Reveal journal",
+      "JournalDica": "A journal or page shown to whoever unlocked it (drag it from the sidebar).",
+      "Macro": "Run macro",
+      "MacroDica": "Runs on the GM. Receives fechadura (the lock document), actor and token.",
+      "ArrasteAqui": "Drop here",
+      "Mensagem": "Chat message",
+      "Salvar": "Save",
+      "Remover": "Remove lock",
+      "Cancelar": "Cancel",
+      "Salva": "Lock for \"{nome}\" saved.",
+      "Removida": "Lock removed."
+    },
+    "Chave": {
+      "Titulo": "Key (Gazua da Mesa)",
+      "Segredos": "Secrets",
+      "SegredosDica": "Comma-separated. The key opens any lock holding one of these secrets.",
+      "Mestra": "Master key",
+      "MestraDica": "Not consumed when used, and opens locks even without the secret.",
+      "NivelMax": "Opens up to level",
+      "NivelMaxDica": "0 = any level.",
+      "UsosMax": "Uses",
+      "UsosMaxDica": "After this many uses it wears out and disappears. 0 = unlimited.",
+      "Zerar": "reset ({n} used)",
+      "Gasta": "Regular keys leave the inventory when they open a lock (if there are several, one is spent).",
+      "Remover": "Stop being a key",
+      "Removida": "The item is no longer a key.",
+      "Salva": "Key \"{nome}\" saved."
+    },
+    "Painel": {
+      "Titulo": "Gazua da Mesa",
+      "Fechaduras": "Locks",
+      "SemFechaduras": "No locks on this map or in journals.",
+      "ComoCriar": "To create one: open the configuration of a door, token, tile, region, note or journal and use the header menu → Lock.",
+      "Nivel": "level {n}",
+      "Trancar": "Lock",
+      "Destrancar": "Unlock",
+      "Ir": "Go to",
+      "Testar": "Open as a player (with the selected token)",
+      "Editar": "Configure",
+      "Chaves": "Keys (Items tab)",
+      "SemChaves": "No keys in the Items tab.",
+      "AteNivel": "up to level {n}",
+      "QualquerNivel": "any level",
+      "NovaChave": "New key",
+      "NovaMestra": "New master key",
+      "NomeNovaChave": "Key",
+      "NomeNovaMestra": "Master key"
+    }
+  }
+}

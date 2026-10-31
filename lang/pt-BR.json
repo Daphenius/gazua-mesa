@@ -1,0 +1,191 @@
+{
+  "GAZUAMESA": {
+    "Tipo": {
+      "Wall": "Porta",
+      "Token": "Baú / token",
+      "Tile": "Tile",
+      "Region": "Região / portal",
+      "Note": "Nota do mapa",
+      "JournalEntry": "Diário",
+      "JournalEntryPage": "Página de diário"
+    },
+    "Menu": {
+      "Fechadura": "Fechadura (Gazua da Mesa)",
+      "Chave": "Chave (Gazua da Mesa)"
+    },
+    "HUD": { "Botao": "Fechaduras ao alcance" },
+    "Opcao": {
+      "anuncio": {
+        "Nome": "Avisar no chat",
+        "Dica": "Quem vê as mensagens de fechadura aberta e de tentativa que falhou.",
+        "todos": "Todos",
+        "mestre": "Só o mestre",
+        "nenhum": "Ninguém"
+      },
+      "mostrarCD": {
+        "Nome": "Mostrar a CD aos jogadores",
+        "Dica": "Aparece no botão do teste de ferramentas de ladrão."
+      },
+      "cliquePorta": {
+        "Nome": "Clicar na porta trancada abre a fechadura",
+        "Dica": "Quando o jogador clica no ícone de uma porta trancada que tem fechadura, abre a janela para usar uma chave ou arrombar."
+      },
+      "entrarRegiao": {
+        "Nome": "Entrar numa região trancada abre a fechadura",
+        "Dica": "Quando o token do jogador para dentro de uma região trancada (um portal, por exemplo), a janela da fechadura aparece."
+      },
+      "botaoHUD": {
+        "Nome": "Botão no HUD do token",
+        "Dica": "Mostra o botão de chave no HUD do token, que lista as fechaduras ao alcance."
+      }
+    },
+    "Aviso": {
+      "SemMestre": "A fechadura precisa de um mestre conectado.",
+      "SemToken": "Selecione o seu token primeiro.",
+      "Longe": "Você está longe demais dessa fechadura.",
+      "NadaPerto": "Nenhuma fechadura trancada ao alcance.",
+      "NaoServe": "A chave \"{chave}\" não serve nesta fechadura.",
+      "SemFechadura": "Isto não tem mais fechadura.",
+      "JaAberta": "Já está destrancada.",
+      "ChaveSumiu": "A chave não está mais com o personagem.",
+      "MestraGasta": "A chave \"{chave}\" se desgastou e quebrou depois deste uso.",
+      "SoChave": "Esta fechadura só abre com a chave.",
+      "SemTentativas": "Você não consegue mais tentar arrombar esta fechadura.",
+      "ErroMacro": "A macro da fechadura falhou. Veja o console (F12).",
+      "Erro": "Algo deu errado com a fechadura. Veja o console do mestre (F12)."
+    },
+    "Chat": {
+      "Alguem": "Alguém",
+      "Destrancou": "<strong>{ator}</strong> destrancou <strong>{nome}</strong> {como}.",
+      "DestrancouSimples": "<strong>{nome}</strong> foi destrancada.",
+      "ComChave": "com a chave <em>{chave}</em>",
+      "ComGazua": "com a gazua",
+      "ComTeste": "com ferramentas de ladrão",
+      "Falhou": "<strong>{ator}</strong> não conseguiu arrombar <strong>{nome}</strong>."
+    },
+    "Janela": {
+      "Trancada": "Trancada",
+      "Aberta": "Destrancada",
+      "Destrancada": "Esta fechadura está destrancada.",
+      "Nivel": "Nível {n} de 10",
+      "Chaves": "Suas chaves",
+      "SemChaves": "Você não tem chaves.",
+      "Mestra": "chave mestra",
+      "Usos": "{n} uso(s)",
+      "Usar": "Usar",
+      "Arrombar": "Arrombar",
+      "Teste": "Ferramentas de ladrão",
+      "CD": "CD",
+      "Minigame": "Usar a gazua",
+      "Esgotou": "Você já tentou demais. Esta fechadura não cede para você.",
+      "SemFerramentas": "Você precisa de ferramentas de ladrão.",
+      "Restam": "Tentativas restantes: {n}",
+      "FlavorTeste": "Arrombar: {nome}"
+    },
+    "Gazua": {
+      "Titulo": "Gazua",
+      "Pino": "Pino {n} de {total}",
+      "Vidas": "Resistência da gazua",
+      "Dica": "Aperte Espaço (ou o botão) quando a agulha estiver no verde. Errar desgasta a gazua. Fechar a janela conta como falha.",
+      "Levantar": "Levantar o pino",
+      "Desistir": "Desistir",
+      "Abriu": "Clique! A fechadura cedeu.",
+      "Quebrou": "A gazua escapou. A fechadura não abriu."
+    },
+    "Proximas": { "Titulo": "Fechaduras ao alcance" },
+    "Config": {
+      "TituloFechadura": "Fechadura (Gazua da Mesa)",
+      "Fechadura": "Fechadura",
+      "Nome": "Nome",
+      "Trancada": "Trancada",
+      "Nivel": "Nível (1–10)",
+      "NivelDica": "Deixa o minigame mais difícil (mais pinos, agulha mais rápida) e limita quais chaves mestras abrem.",
+      "Segredos": "Segredos",
+      "SegredosDica": "Palavras-código separadas por vírgula. Qualquer chave que tenha um destes segredos abre esta fechadura. Use o mesmo segredo em várias fechaduras para uma chave abrir todas.",
+      "Gerar": "Gerar um segredo",
+      "Mestra": "Aceita chave mestra",
+      "MestraDica": "Desmarque para fechaduras especiais (um selo mágico, por exemplo) que só abrem com a chave certa.",
+      "CriarChave": "Criar uma chave para esta fechadura",
+      "NomeChave": "Chave: {nome}",
+      "ChaveCriada": "Item \"{nome}\" criado na aba de Itens.",
+      "LembreSalvar": "Não esqueça de salvar a fechadura para o segredo valer.",
+      "SemChave": "Sem a chave",
+      "Modo": "Como dá para abrir",
+      "Modos": {
+        "ambos": "Teste ou minigame (o jogador escolhe)",
+        "minigame": "Só o minigame da gazua",
+        "teste": "Só o teste de ferramentas de ladrão",
+        "chave": "Só com a chave"
+      },
+      "CD": "CD",
+      "CDDica": "Dificuldade do teste. No minigame, quanto maior a CD em relação ao bônus do personagem, menor a área verde.",
+      "Ferramentas": "Exige ferramentas de ladrão",
+      "Tentativas": "Tentativas por personagem",
+      "TentativasDica": "Quantas falhas cada personagem pode ter antes de desistir desta fechadura. 0 = sem limite.",
+      "ZerarFalhas": "zerar as falhas",
+      "Alcance": "Alcance (casas)",
+      "AlcanceDica": "Distância máxima do token até a fechadura.",
+      "AoDestrancar": "Ao destrancar",
+      "AbrirPorta": "Abrir a porta",
+      "AbrirPortaDica": "Desmarcado: a porta só destranca e o jogador abre.",
+      "Visibilidade": "Este objeto",
+      "VisibilidadeDica": "Ex.: esconder o tile do baú fechado ou mostrar o tile do baú aberto.",
+      "Vis": { "nada": "Não muda", "mostrar": "Aparece", "esconder": "Some" },
+      "Permissao": "Permissão",
+      "PermissaoDicaToken": "Permissão no ator do baú para quem abriu (baús do Item Piles só destrancam).",
+      "PermissaoDicaDiario": "Permissão no diário para quem abriu. Deixe o diário sem permissão para os jogadores: a chave é o que libera.",
+      "Perm": { "nenhuma": "Não muda", "observador": "Observador", "dono": "Dono" },
+      "ParaTodos": "Liberar para todos os jogadores",
+      "ParaTodosDica": "Permissões e diários revelados valem para todos, não só para quem abriu.",
+      "Gatilho": "Ligar o gatilho do Navegador de Mapas",
+      "GatilhoDica": "Enquanto trancado, o gatilho deste objeto fica desativado.",
+      "Journal": "Revelar diário",
+      "JournalDica": "Um diário ou página que abre para quem destrancou (arraste da barra lateral).",
+      "Macro": "Executar macro",
+      "MacroDica": "Roda no mestre. Recebe fechadura, actor e token.",
+      "ArrasteAqui": "Arraste aqui",
+      "Mensagem": "Mensagem no chat",
+      "Salvar": "Salvar",
+      "Remover": "Remover fechadura",
+      "Cancelar": "Cancelar",
+      "Salva": "Fechadura de \"{nome}\" salva.",
+      "Removida": "Fechadura removida."
+    },
+    "Chave": {
+      "Titulo": "Chave (Gazua da Mesa)",
+      "Segredos": "Segredos",
+      "SegredosDica": "Separados por vírgula. A chave abre qualquer fechadura que tenha um destes segredos.",
+      "Mestra": "Chave mestra",
+      "MestraDica": "Não é gasta ao usar e abre fechaduras mesmo sem o segredo.",
+      "NivelMax": "Abre até o nível",
+      "NivelMaxDica": "0 = qualquer nível.",
+      "UsosMax": "Usos",
+      "UsosMaxDica": "Depois de tantos usos ela se desgasta e some. 0 = sem limite.",
+      "Zerar": "zerar ({n} usada(s))",
+      "Gasta": "Chaves comuns somem do inventário quando abrem uma fechadura (se houver várias, gasta uma).",
+      "Remover": "Deixar de ser chave",
+      "Removida": "O item não é mais uma chave.",
+      "Salva": "Chave \"{nome}\" salva."
+    },
+    "Painel": {
+      "Titulo": "Gazua da Mesa",
+      "Fechaduras": "Fechaduras",
+      "SemFechaduras": "Nenhuma fechadura neste mapa nem nos diários.",
+      "ComoCriar": "Para criar: abra a configuração da porta, token, tile, região, nota ou diário e use o menu do cabeçalho → Fechadura.",
+      "Nivel": "nível {n}",
+      "Trancar": "Trancar",
+      "Destrancar": "Destrancar",
+      "Ir": "Ir até",
+      "Testar": "Abrir como jogador (com o token selecionado)",
+      "Editar": "Configurar",
+      "Chaves": "Chaves (aba de Itens)",
+      "SemChaves": "Nenhuma chave na aba de Itens.",
+      "AteNivel": "até o nível {n}",
+      "QualquerNivel": "qualquer nível",
+      "NovaChave": "Nova chave",
+      "NovaMestra": "Nova chave mestra",
+      "NomeNovaChave": "Chave",
+      "NomeNovaMestra": "Chave mestra"
+    }
+  }
+}

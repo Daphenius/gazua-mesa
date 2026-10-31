@@ -1,0 +1,92 @@
+/* Gazua da Mesa */
+.gazua-mesa {
+  --lp-ouro: #d9a441;
+  --lp-verde: #4caf6a;
+  --lp-vermelho: #c9483c;
+  --lp-fundo: rgba(0, 0, 0, 0.18);
+  --lp-borda: rgba(128, 128, 128, 0.35);
+}
+
+.gazua-mesa .window-content { gap: 0.5rem; }
+.gazua-mesa h3, .gazua-mesa h4 { margin: 0.6rem 0 0.3rem; border-bottom: 1px solid var(--lp-borda); padding-bottom: 2px; }
+.gazua-mesa h4 { font-size: 0.95rem; }
+.gazua-mesa .lp-vazio, .gazua-mesa .lp-dica, .gazua-mesa .hint { opacity: 0.75; font-size: 0.85rem; margin: 0.25rem 0; }
+.gazua-mesa .lp-bloqueio { color: var(--lp-vermelho); font-size: 0.85rem; margin: 0.25rem 0; }
+.gazua-mesa .lp-botoes { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.gazua-mesa .lp-botoes button { flex: 1 1 auto; }
+.gazua-mesa .lp-oculto { display: none; }
+.gazua-mesa .lp-inline { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; font-size: 0.85rem; }
+
+/* Janela da fechadura */
+.lp-janela .lp-topo { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; background: var(--lp-fundo); border-radius: 6px; }
+.lp-janela .lp-topo > i { font-size: 1.8rem; color: var(--lp-ouro); width: 2.2rem; text-align: center; }
+.lp-janela .lp-topo .lp-quem { margin-left: auto; font-size: 0.85rem; opacity: 0.8; }
+.lp-janela .lp-estado { font-weight: bold; }
+.lp-janela .lp-estado.fechada { color: var(--lp-vermelho); }
+.lp-janela .lp-estado.aberta { color: var(--lp-verde); }
+.lp-janela .lp-nivel { display: flex; gap: 3px; margin-top: 4px; }
+.lp-janela .lp-nivel span { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--lp-ouro); }
+.lp-janela .lp-nivel span.on { background: var(--lp-ouro); }
+.lp-janela .lp-aberta { color: var(--lp-verde); text-align: center; margin: 0.75rem 0; }
+
+.gazua-mesa .lp-chaves, .gazua-mesa .lp-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.gazua-mesa .lp-chaves li, .gazua-mesa .lp-lista li {
+  display: flex; align-items: center; gap: 0.5rem; padding: 4px 6px;
+  border: 1px solid var(--lp-borda); border-radius: 5px;
+}
+.gazua-mesa .lp-chaves img, .gazua-mesa .lp-lista img { width: 28px; height: 28px; border: none; border-radius: 4px; }
+.gazua-mesa .lp-chaves li span { flex: 1; }
+.gazua-mesa .lp-chaves li em { display: block; font-size: 0.75rem; opacity: 0.75; }
+.gazua-mesa .lp-chaves button { flex: 0 0 auto; width: auto; }
+
+.gazua-mesa .lp-lista li[data-action] { cursor: pointer; }
+.gazua-mesa .lp-lista li[data-action]:hover { border-color: var(--lp-ouro); }
+.gazua-mesa .lp-lista li > i { width: 1.4rem; text-align: center; color: var(--lp-ouro); }
+.gazua-mesa .lp-lista li > span, .gazua-mesa .lp-lista .lp-nome { flex: 1; min-width: 0; }
+.gazua-mesa .lp-lista li > em { font-size: 0.75rem; opacity: 0.7; }
+.gazua-mesa .lp-lista .lp-nome em { display: block; font-size: 0.75rem; opacity: 0.7; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gazua-mesa .lp-gm a { padding: 0 3px; }
+.gazua-mesa .lp-gm a.fechada { color: var(--lp-vermelho); }
+.gazua-mesa .lp-gm a.aberta { color: var(--lp-verde); }
+
+/* Configuração */
+.lp-config .lp-alvo { margin: 0 0 0.4rem; }
+.lp-config .lp-alvo i { color: var(--lp-ouro); }
+.lp-config fieldset { margin: 0 0 0.5rem; }
+.lp-config fieldset > button { margin-top: 0.3rem; width: 100%; }
+.lp-config .form-fields button { flex: 0 0 2rem; }
+.lp-config textarea { width: 100%; }
+
+/* Minigame */
+.lp-gazua .lp-mg { display: flex; flex-direction: column; gap: 0.6rem; user-select: none; }
+.lp-gazua .lp-mg-nome { text-align: center; margin: 0; font-weight: bold; }
+.lp-gazua .lp-cilindro {
+  display: flex; justify-content: center; gap: 10px; padding: 12px 10px 6px;
+  background: linear-gradient(#5a4a2c, #3a2f1c); border: 2px solid var(--lp-ouro); border-radius: 10px 10px 30px 30px;
+}
+.lp-gazua .lp-pino { width: 18px; height: 56px; background: rgba(0, 0, 0, 0.45); border-radius: 4px; position: relative; overflow: hidden; }
+.lp-gazua .lp-pino span {
+  position: absolute; left: 2px; right: 2px; bottom: 2px; height: 26px; border-radius: 3px;
+  background: #9a9a9a; transition: bottom 0.25s ease, background 0.25s;
+}
+.lp-gazua .lp-pino.atual span { background: #e0e0e0; box-shadow: 0 0 6px #fff; }
+.lp-gazua .lp-pino.ok span { bottom: 28px; background: var(--lp-ouro); }
+.lp-gazua .lp-barra { position: relative; height: 26px; border-radius: 13px; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--lp-borda); overflow: hidden; }
+.lp-gazua .lp-zona { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--lp-verde) 75%, transparent); }
+.lp-gazua .lp-agulha { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: #fff; box-shadow: 0 0 6px #fff; }
+.lp-gazua .lp-mg-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+.lp-gazua .lp-vidas i { color: var(--lp-ouro); margin-right: 3px; }
+.lp-gazua .lp-vidas i.quebrada { color: var(--lp-vermelho); opacity: 0.4; }
+.lp-gazua .lp-principal { font-weight: bold; }
+.lp-gazua .lp-tremer { animation: lp-tremer 0.3s; }
+.lp-gazua .lp-abriu .lp-cilindro { border-color: var(--lp-verde); box-shadow: 0 0 12px var(--lp-verde); }
+.lp-gazua .lp-quebrou .lp-cilindro { border-color: var(--lp-vermelho); box-shadow: 0 0 12px var(--lp-vermelho); }
+@keyframes lp-tremer {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+/* Chat e HUD */
+.gazua-mesa-chat i { color: var(--lp-ouro, #d9a441); margin-right: 3px; }
+.gazua-mesa-chat .lp-msg { margin: 0.3rem 0 0; font-style: italic; }

@@ -1,0 +1,21 @@
+name: Release
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+jobs:
+  pacote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conferir versão e empacotar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ID=$(jq -r .id module.json)
+          VER=$(jq -r .version module.json)
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$TAG" != "$VER" ]; then echo "Tag $GITHUB_REF_NAME diferente da versão $VER do module.json"; exit 1; fi
+          zip -r "$ID.zip" . -x ".git/*" ".github/*" "*.zip" "CHANGELOG.md"
+          gh release upload "$GITHUB_REF_NAME" "$ID.zip" module.json --clobber
