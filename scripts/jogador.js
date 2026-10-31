@@ -2,9 +2,9 @@
 
 import {
   ID, t, esc, cfg, REMOTOS, lerFechadura, lerChave, estaTrancada, chaveServe, nomeFechadura, iconeTipo,
-  chavesDoAtor, gazuaDoAtor, lerGazua, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
+  chavesDoAtor, gazuaDoAtor, gazuaGuardada, lerGazua, apiDados, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
 } from "./dados.js";
-import { pedir } from "./mestre.js";
+import { pedir, esperarTeste } from "./mestre.js";
 import { jogar, escolherJogo, parametros, JOGOS } from "./jogos.js";
 
 const { ApplicationV2 } = foundry.applications.api;
@@ -103,7 +103,10 @@ export class JanelaFechadura extends ApplicationV2 {
       const esgotou = f.tentativas > 0 && falhas >= f.tentativas;
       const gazua = gazuaDoAtor(actor);
       const semFerr = f.exigeFerramentas && !gazua;
-      const bloqueio = esgotou ? t("Janela.Esgotou") : semFerr ? t("Janela.SemFerramentas") : "";
+      const guardada = semFerr ? gazuaGuardada(actor) : null;
+      const bloqueio = esgotou ? t("Janela.Esgotou")
+        : guardada ? t("Janela.Equipe", { nome: esc(guardada.name) })
+        : semFerr ? t("Janela.SemFerramentas") : "";
       const dis = bloqueio || this.ocupado ? "disabled" : "";
       const cd = cfg("mostrarCD") ? ` · ${t("Janela.CD")} ${f.cd}` : "";
       const acao = (acao, icone, titulo, sub) => `
@@ -121,13 +124,18 @@ export class JanelaFechadura extends ApplicationV2 {
       corpo += `<h4><i class="fa-solid fa-screwdriver"></i> ${t("Janela.Arrombar")}</h4><div class="lp-acoes">${botoes.join("")}</div>`;
       if (gazua && !bloqueio) {
         const g = lerGazua(gazua);
-        const info = g ? [g.bonus > 0 ? `+${g.bonus}` : "", g.usosMax > 0 ? t("Janela.GazuaUsos", { n: g.usosMax - g.usados }) : ""].filter(Boolean).join(" · ") : "";
+        const info = g ? [g.bonus > 0 ? `+${g.bonus}` : "", g.usosMax > 1 ? t("Janela.GazuaUsos", { n: g.usosMax - g.usados }) : "",
+          Number(gazua.system?.quantity) > 1 ? t("Janela.GazuaQtd", { n: gazua.system.quantity }) : ""].filter(Boolean).join(" · ") : "";
         corpo += `<p class="lp-gazua-usada"><img src="${esc(gazua.img)}" alt=""> ${t("Janela.ComGazua", { nome: esc(gazua.name) })}${info ? ` <em>${info}</em>` : ""}</p>`;
       }
       if (bloqueio) corpo += `<p class="lp-bloqueio"><i class="fa-solid fa-ban"></i> ${bloqueio}</p>`;
       else if (f.tentativas > 0) corpo += `<p class="lp-dica">${t("Janela.Restam", { n: f.tentativas - falhas })}</p>`;
     }
 
+    if (f.modo !== "chave" && !remoto) {
+      corpo += `<details class="lp-como-abrir"><summary><i class="fa-solid fa-circle-question"></i> ${t("Janela.ComoAbrir")}</summary>
+        <ol>${[1, 2, 3, 4].map(n => `<li>${t(`Janela.ComoAbrir${n}`)}</li>`).join("")}</ol></details>`;
+    }
     const quem = actor ? `<p class="lp-quem"><img src="${esc(actor.img ?? "")}" alt=""> ${t("Janela.Personagem", { nome: esc(actor.name) })}</p>` : "";
     return `${heroi}${corpo}${quem}`;
   }
@@ -158,16 +166,44 @@ export class JanelaFechadura extends ApplicationV2 {
     pedir({ tipo: "chave", uuid: this.doc.uuid, actorUuid: this.actor.uuid, itemUuid: item.uuid });
   }
 
+  /** Teste de Ferramentas de Ladrão (pelo Dados em Cena, se ligado). Devolve o total com o bônus da gazua, ou null. */
+  async #fazerTeste(f, bonus) {
+    const nome = nomeFechadura(this.doc, f);
+    const modo = cfg("testeDadosEmCena");
+    let total;
+    if (modo !== "desligado" && apiDados()) {
+      if (!game.users.activeGM) { ui.notifications.warn(t("Aviso.SemMestre")); return null; }
+      const pedidoId = foundry.utils.randomID();
+      const espera = esperarTeste(pedidoId);
+      const tdoc = this.token?.document ?? this.token;
+      pedir({
+        tipo: "testeDC", pedidoId, uuid: this.doc.uuid, actorUuid: this.actor.uuid,
+        tokenId: tdoc?.id, sceneId: tdoc?.parent?.id, bonus, modo
+      });
+      ui.notifications.info(t("Janela.AguardandoTeste"));
+      total = await espera;
+      if (total == null) { ui.notifications.warn(t("Janela.TesteSemResposta")); return null; }
+    } else {
+      const rolado = await rolarTeste(this.actor, f, nome);
+      if (rolado == null) return null;
+      total = rolado + bonus;
+    }
+    const passou = total >= Number(f.cd);
+    const cd = cfg("mostrarCD") ? ` (${t("Janela.CD")} ${f.cd})` : "";
+    ui.notifications[passou ? "info" : "warn"](t(passou ? "Janela.TestePassou" : "Janela.TesteFalhou", { total, cd }));
+    return total;
+  }
+
   static async #teste() {
     if (this.ocupado || !this.#conferir()) return;
     const f = lerFechadura(this.doc);
     const gazua = gazuaDoAtor(this.actor);
     const bonus = lerGazua(gazua)?.bonus ?? 0;
     this.ocupado = true;
+    this.render();
     try {
-      const rolado = await rolarTeste(this.actor, f, nomeFechadura(this.doc, f), bonus);
-      if (rolado == null) return;
-      const total = rolado + bonus;
+      const total = await this.#fazerTeste(f, bonus);
+      if (total == null) return;
       pedir({ tipo: "arrombar", via: "teste", uuid: this.doc.uuid, actorUuid: this.actor.uuid, gazuaUuid: gazua?.uuid, sucesso: total >= Number(f.cd), total });
     } finally {
       this.ocupado = false;
@@ -188,17 +224,18 @@ export class JanelaFechadura extends ApplicationV2 {
       // Primeiro a CD: só quem passa consegue trabalhar a fechadura com a gazua
       let margem = 0;
       if (f.testeAntes) {
-        const rolado = await rolarTeste(this.actor, f, nome, bonusGazua);
-        if (rolado == null) return;
-        const total = rolado + bonusGazua;
-        if (total < Number(f.cd)) {
-          ui.notifications.warn(t("Janela.TesteFalhou"));
-          return pedir({ ...base, tipo: "arrombar", via: "teste", sucesso: false, total });
-        }
+        const total = await this.#fazerTeste(f, bonusGazua);
+        if (total == null) return;
+        if (total < Number(f.cd)) return pedir({ ...base, tipo: "arrombar", via: "teste", sucesso: false, total });
         margem = total - Number(f.cd);
       }
-      const sucesso = await jogar(escolherJogo(f), { parametros: parametros(f, this.actor, { margem, bonusGazua }), nome });
+      const tipo = escolherJogo(f);
+      const sucesso = await jogar(tipo, { parametros: parametros(f, this.actor, { margem, bonusGazua }, tipo), nome });
+      if (sucesso === null) return;   // o minijogo nem abriu (erro já avisado)
       if (estaTrancada(this.doc)) pedir({ ...base, tipo: "arrombar", via: "minigame", sucesso });
+    } catch (e) {
+      console.error(`${ID} | minijogo`, e);
+      ui.notifications.error(t("Aviso.ErroJogo"));
     } finally {
       this.ocupado = false;
       if (this.rendered) this.render();
@@ -207,8 +244,8 @@ export class JanelaFechadura extends ApplicationV2 {
 }
 
 /** Teste de ferramentas de ladrão. Usa a rolagem do D&D 5e quando dá; senão, d20 + Destreza. */
-export async function rolarTeste(actor, f, nome, bonus = 0) {
-  if (typeof actor.rollToolCheck === "function" && actor.system?.tools?.thief) {
+export async function rolarTeste(actor, f, nome) {
+  if (typeof actor.rollToolCheck === "function" && (actor.system?.tools?.thief || CONFIG.DND5E?.tools?.thief)) {
     try {
       const r = await actor.rollToolCheck({ tool: "thief", target: Number(f.cd) });
       const roll = Array.isArray(r) ? r[0] : r;
@@ -217,7 +254,7 @@ export async function rolarTeste(actor, f, nome, bonus = 0) {
       console.warn(`${ID} | rollToolCheck falhou, usando rolagem simples`, e);
     }
   }
-  // sem a rolagem do sistema: d20 + Destreza (o bônus da gazua entra depois, no total)
+  // sem a rolagem do sistema: d20 + Destreza
   const mod = Number(actor.system?.abilities?.dex?.mod) || 0;
   const roll = await new Roll("1d20 + @mod", { mod }).evaluate();
   await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: t("Janela.FlavorTeste", { nome: esc(nome) }) });

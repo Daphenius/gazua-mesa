@@ -95,8 +95,20 @@ function chavesComSegredo(texto) {
 function listaChaves(texto) {
   const itens = chavesComSegredo(texto);
   if (!itens.length) return `<li class="lp-vazio">${t("Config.NenhumaChave")}</li>`;
-  return itens.map(i => `<li><img src="${esc(i.img)}" alt=""><span class="lp-nome">${esc(i.name)}
-    <em>${i.parent ? t("Config.ComPersonagem", { nome: esc(i.parent.name) }) : t("Config.NaAbaItens")}</em></span></li>`).join("");
+  return itens.map(i => `<li data-uuid="${i.uuid}"><img src="${esc(i.img)}" alt=""><span class="lp-nome">${esc(i.name)}
+    <em>${i.parent ? t("Config.ComPersonagem", { nome: esc(i.parent.name) }) : t("Config.NaAbaItens")}</em></span>
+    <a class="lp-acao-chave" data-lp="desvincular" data-tooltip="${esc(t("Config.Desvincular"))}"><i class="fa-solid fa-link-slash"></i></a>
+    <a class="lp-acao-chave lp-perigo" data-lp="excluirItem" data-tooltip="${esc(t("Config.ExcluirItem"))}"><i class="fa-solid fa-trash"></i></a></li>`).join("");
+}
+
+/** Tira estes segredos do item; sem segredo nenhum, ele volta a ser um item comum. */
+export async function desvincularChave(item, texto) {
+  const c = lerChave(item);
+  if (!c) return;
+  const tirar = new Set(segredos(texto));
+  const resto = segredos(c.segredos).filter(s => !tirar.has(s));
+  if (!resto.length && !c.mestra) return item.unsetFlag(ID, "chave");
+  await item.update({ [`flags.${ID}.chave.segredos`]: resto.join(", ") });
 }
 
 // ---------- Fechadura ----------
@@ -256,6 +268,30 @@ export async function configurarFechadura(doc) {
       const atualizarLista = () => { if (listaEl) listaEl.innerHTML = listaChaves(inputSeg.value); };
       inputSeg.addEventListener("change", atualizarLista);
 
+      // Botões de cada chave da lista: deixar de abrir esta fechadura ou excluir o item
+      listaEl?.addEventListener("click", async ev => {
+        const botao = ev.target.closest("[data-lp]");
+        const uuid = botao?.closest("[data-uuid]")?.dataset.uuid;
+        if (!botao || !uuid) return;
+        ev.preventDefault();
+        const item = await fromUuid(uuid);
+        if (!item) return atualizarLista();
+        if (botao.dataset.lp === "desvincular") {
+          await desvincularChave(item, inputSeg.value);
+          ui.notifications.info(t("Config.Desvinculada", { nome: item.name }));
+        } else if (botao.dataset.lp === "excluirItem") {
+          const ok = await DialogV2.confirm({
+            window: { title: t("Config.ExcluirItem"), icon: "fa-solid fa-trash" },
+            content: `<p>${t("Config.ExcluirPergunta", { nome: esc(item.name) })}</p>`,
+            rejectClose: false
+          });
+          if (!ok) return;
+          await item.delete();
+          ui.notifications.info(t("Config.ItemExcluido", { nome: item.name }));
+        }
+        atualizarLista();
+      });
+
       // Soltar qualquer item aqui: ele vira chave desta fechadura
       const zona = el.querySelector("[data-lp=soltar]");
       zona?.addEventListener("dragover", ev => { ev.preventDefault(); zona.classList.add("sobre"); });
@@ -322,6 +358,8 @@ export async function configurarChave(item) {
   const chave = c ?? foundry.utils.deepClone(PADRAO_CHAVE);
   const gazua = g ?? foundry.utils.deepClone(PADRAO_GAZUA);
   const atual = g ? "gazua" : c?.mestra ? "mestra" : "comum";
+  const equipavel = item.system && "equipped" in item.system;
+  const cfgEquip = game.settings.get(ID, "gazuaEquipada");
 
   const tipos = [
     { v: "comum", icone: "fa-key" },
@@ -348,8 +386,9 @@ export async function configurarChave(item) {
         ${linha(t("Chave.UsosMax"), `<input type="number" name="usosMax" min="0" value="${chave.usosMax}">
           <label class="lp-inline"><input type="checkbox" name="zerarUsos"> ${t("Chave.Zerar", { n: chave.usados })}</label>`, t("Chave.UsosMaxDica"))}`, "lp-so-mestra")}
       ${secao("fa-screwdriver", t("Gazua.Item.Titulo"), `
+        ${cfgEquip && !equipavel ? `<p class="lp-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${t("Gazua.Item.NaoEquipa")}</p>` : ""}
         ${linha(t("Gazua.Item.Bonus"), `<input type="number" name="bonus" min="0" max="10" value="${gazua.bonus}">`, t("Gazua.Item.BonusDica"))}
-        ${linha(t("Gazua.Item.Usos"), `<input type="number" name="usosGazua" min="0" value="${gazua.usosMax}">
+        ${linha(t("Gazua.Item.Usos"), `<input type="number" name="usosGazua" min="1" value="${Math.max(1, gazua.usosMax)}">
           <label class="lp-inline"><input type="checkbox" name="zerarGazua"> ${t("Chave.Zerar", { n: gazua.usados })}</label>`, t("Gazua.Item.UsosDica"))}`, "lp-so-gazua")}
     </div>`;
 
@@ -390,7 +429,7 @@ export async function configurarChave(item) {
   if (r.tipoItem === "gazua") {
     const nova = {
       ...gazua, ativa: true,
-      bonus: Math.max(0, Number(r.bonus) || 0), usosMax: Math.max(0, Number(r.usosGazua) || 0)
+      bonus: Math.max(0, Number(r.bonus) || 0), usosMax: Math.max(1, Number(r.usosGazua) || 1)
     };
     if (r.zerarGazua) nova.usados = 0;
     if (c) await item.unsetFlag(ID, "chave");
@@ -424,7 +463,8 @@ export class PainelFechaduras extends ApplicationV2 {
       editarChave: PainelFechaduras.#editarChave,
       novaChave: PainelFechaduras.#novaChave,
       novaMestra: PainelFechaduras.#novaMestra,
-      novaGazua: PainelFechaduras.#novaGazua
+      novaGazua: PainelFechaduras.#novaGazua,
+      minijogos: PainelFechaduras.#minijogos
     }
   };
 
@@ -454,7 +494,7 @@ export class PainelFechaduras extends ApplicationV2 {
       const c = lerChave(i);
       const g = lerGazua(i);
       const info = g
-        ? `${t("Chave.Tipo.gazua")}${g.bonus ? ` · +${g.bonus}` : ""}${g.usosMax > 0 ? ` · ${g.usados}/${g.usosMax}` : ""}`
+        ? `${t("Chave.Tipo.gazua")}${g.bonus ? ` · +${g.bonus}` : ""}${g.usosMax > 1 ? ` · ${g.usados}/${g.usosMax}` : ""}`
         : c.mestra
         ? `${t("Janela.Mestra")} · ${c.nivelMax > 0 ? t("Painel.AteNivel", { n: c.nivelMax }) : t("Painel.QualquerNivel")}${c.usosMax > 0 ? ` · ${c.usados}/${c.usosMax}` : ""}`
         : (segredos(c.segredos).join(", ") || "—");
@@ -475,6 +515,12 @@ export class PainelFechaduras extends ApplicationV2 {
           <button type="button" data-action="novaChave"><i class="fa-solid fa-key"></i> ${t("Painel.NovaChave")}</button>
           <button type="button" data-action="novaMestra"><i class="fa-solid fa-crown"></i> ${t("Painel.NovaMestra")}</button>
           <button type="button" data-action="novaGazua"><i class="fa-solid fa-screwdriver"></i> ${t("Painel.NovaGazua")}</button>
+        </div>
+      </section>
+      <section>
+        <h3><i class="fa-solid fa-puzzle-piece"></i> ${t("Ajustes.Titulo")}</h3>
+        <div class="lp-botoes">
+          <button type="button" data-action="minijogos"><i class="fa-solid fa-sliders"></i> ${t("Ajustes.Abrir")}</button>
         </div>
       </section>`;
   }
@@ -521,6 +567,11 @@ export class PainelFechaduras extends ApplicationV2 {
   static async #novaChave() {
     await criarChaveItem({ nome: t("Painel.NomeNovaChave"), segredo: gerarSegredo() });
     this.render();
+  }
+
+  static async #minijogos() {
+    const { JanelaMinijogos } = await import("./ajustes.js");
+    new JanelaMinijogos().render({ force: true });
   }
 
   static async #novaGazua() {

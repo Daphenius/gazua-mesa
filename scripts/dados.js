@@ -47,7 +47,7 @@ export const PADRAO_CHAVE = {
 export const PADRAO_GAZUA = {
   ativa: true,
   bonus: 0,               // soma no teste e dá +2 s por ponto no minijogo
-  usosMax: 0,             // falhas que aguenta antes de quebrar (0 = não quebra)
+  usosMax: 1,             // falhas que cada unidade aguenta antes de quebrar
   usados: 0
 };
 
@@ -130,14 +130,36 @@ export function chavesDoAtor(actor) {
   return (actor?.items?.contents ?? []).filter(i => lerChave(i));
 }
 
-/** As gazuas do personagem: itens marcados pelo mestre e, se a opção deixar, ferramentas de ladrão. */
-export function gazuasDoAtor(actor) {
+/** Todos os itens que servem de gazua (marcados pelo mestre e, se a opção deixar, ferramentas de ladrão). */
+export function itensGazua(actor) {
   const itens = actor?.items?.contents ?? [];
   const marcadas = itens.filter(i => lerGazua(i));
   const ferramentas = cfg("ferramentasContam")
     ? itens.filter(i => !lerGazua(i) && i.type === "tool" && (i.system?.type?.baseItem === "thief" || /thie|ladr/i.test(i.name)))
     : [];
   return [...marcadas, ...ferramentas];
+}
+
+export const estaEquipada = item => item?.system?.equipped === true;
+
+/** As gazuas que o personagem pode usar agora (equipadas, se a opção exigir). */
+export function gazuasDoAtor(actor) {
+  const todas = itensGazua(actor);
+  return cfg("gazuaEquipada") ? todas.filter(estaEquipada) : todas;
+}
+
+/** Uma gazua que o personagem tem, mas não equipou (para avisar o jogador). */
+export function gazuaGuardada(actor) {
+  return cfg("gazuaEquipada") ? itensGazua(actor).find(i => !estaEquipada(i)) ?? null : null;
+}
+
+/** API de teste do Dados em Cena (ou do Epic Roll da Mesa, se ainda tiver a API). */
+export function apiDados() {
+  for (const id of ["dados-em-cena", "epic-roll-mesa"]) {
+    const m = game.modules.get(id);
+    if (m?.active && typeof m.api?.pedirTeste === "function") return m.api;
+  }
+  return null;
 }
 
 /** A melhor gazua do personagem (a de maior bônus). */

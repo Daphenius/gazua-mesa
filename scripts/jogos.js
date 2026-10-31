@@ -14,6 +14,7 @@
 //  - Canalizar (canalizar): segure para erguer a mana e mantenha-a dentro da faixa rúnica até encher o selo.
 
 import { t, esc, bonusArrombar } from "./dados.js";
+import { lerAjustes, jogosAtivos } from "./ajustes.js";
 
 const { ApplicationV2 } = foundry.applications.api;
 
@@ -46,29 +47,39 @@ function glifo(i, x = 0, y = 0, escala = 1, classe = "lp-glifo") {
  * Parâmetros comuns. A dificuldade do jogo é o nível da fechadura ajustado pela diferença
  * entre a CD e o bônus do personagem: personagens melhores enfrentam uma versão mais fácil.
  */
-export function parametros(f, actor, { margem = 0, bonusGazua = 0 } = {}) {
+export function parametros(f, actor, { margem = 0, bonusGazua = 0 } = {}, tipo = "discos", ajustes = null) {
+  const aj = { ...lerAjustes(tipo), ...(ajustes ?? {}) };
   const nivel = Math.clamp(Number(f.nivel) || 1, 1, 10);
   const { total, mult } = bonusArrombar(actor);
   const cd = Number(f.cd) || 15;
-  const dificuldade = Math.clamp(nivel + Math.round((cd - 10 - total - bonusGazua) / 4), 1, 10);
-  const base = Math.max(0, Number(f.tempo) || 0);
+  const dificuldade = Math.clamp(nivel + Math.round((cd - 10 - total - bonusGazua) / 4) + (Number(aj.ajuste) || 0), 1, 10);
+  // tempo próprio do minijogo (se configurado) ou o da fechadura
+  const base = Math.max(0, Number(aj.tempo) > 0 ? Number(aj.tempo) : Number(f.tempo) || 0);
   const extra = 2 * Math.max(0, margem) + 2 * Math.max(0, bonusGazua);
   return {
     nivel, dificuldade, bonus: total, expertise: mult >= 2,
     tempo: base > 0 ? base + extra : 0,     // segundos; 0 = sem limite
-    extra
+    extra, aj
   };
 }
 
 export function escolherJogo(f) {
   const j = f.minijogo;
-  return JOGOS.includes(j) ? j : sortear(JOGOS);
+  return JOGOS.includes(j) ? j : sortear(jogosAtivos());
 }
 
 /** Abre o minijogo e espera o resultado: true (abriu) ou false. */
 export function jogar(tipo, opcoes) {
   const Classe = { discos: Discos, runas: Runas, labirinto: Labirinto, sigilo: Sigilo, cristais: Cristais, canalizar: Canalizar }[tipo] ?? Discos;
-  return new Promise(resolve => new Classe({ ...opcoes, resolve }).render({ force: true }));
+  return new Promise(resolve => {
+    const app = new Classe({ ...opcoes, resolve });
+    app.render({ force: true }).catch(err => {
+      console.error("gazua-mesa | o minijogo não abriu:", err);
+      ui.notifications.error(t("Aviso.ErroJogo"));
+      app._resolve = null;
+      resolve(null);
+    });
+  });
 }
 
 // ======================================================================
@@ -91,7 +102,8 @@ class MiniJogo extends ApplicationV2 {
     this.nome = options.nome;
     this._resolve = options.resolve;
     this.fim = null;
-    this.vidasMax = this.resistencia();
+    this.aj = this.p.aj ?? {};
+    this.vidasMax = this.#comExtra(this.resistencia());
     this.vidas = this.vidasMax;
     this.restante = this.p.tempo;
     this._tecla = ev => {
@@ -101,6 +113,9 @@ class MiniJogo extends ApplicationV2 {
   }
 
   get title() { return t(`Jogo.${this.constructor.TIPO}.Nome`); }
+
+  #comExtra(n) { return n > 0 ? Math.max(1, n + (Number(this.aj?.concentracao) || 0)) : 0; }
+  ajustarResistencia() { this.vidasMax = this.vidas = this.#comExtra(this.resistencia()); }
 
   /** Quantos erros a gazua aguenta. */
   resistencia() { return 3 + (this.p.expertise ? 1 : 0); }
@@ -240,7 +255,7 @@ export class Discos extends MiniJogo {
   constructor(options) {
     super(options);
     const d = this.p.dificuldade;
-    this.n = Math.min(5, 2 + Math.ceil(d / 3));
+    this.n = Math.min(Number(this.aj.maxAneis) || 5, 5, 2 + Math.ceil(d / 3));
     this.pos = Array(this.n).fill(0);
     this.ang = Array(this.n).fill(0);     // ângulo acumulado (para a animação não voltar)
     this.sel = this.n - 1;
@@ -253,6 +268,7 @@ export class Discos extends MiniJogo {
       return l;
     });
     if (d >= 4 && this.ligacoes.every(l => l.length === 1)) this.ligacoes[0].push(1);
+    if (this.aj.ligacoes === false) this.ligacoes = this.ligacoes.map((_, i) => [i]);
     // embaralha a partir do resolvido: sempre tem solução
     do {
       for (let k = 0; k < 4 + d; k++) this.#girar(Math.floor(Math.random() * this.n), Math.random() < 0.5 ? 1 : -1, false);
@@ -387,8 +403,9 @@ export class Runas extends MiniJogo {
     const d = this.p.dificuldade;
     this.qtd = d >= 6 ? 8 : 6;
     this.tam = 3 + Math.ceil(d / 2);
-    this.invertida = d >= 7;
-    this.ritmo = Math.max(360, 760 - d * 40);   // ms por runa
+    const desde = Number(this.aj.inverterDesde ?? 7);
+    this.invertida = desde > 0 && d >= desde;
+    this.ritmo = Math.max(300, (760 - d * 40) / (Number(this.aj.ritmo) || 1));   // ms por runa
     this.seq = Array.from({ length: this.tam }, () => Math.floor(Math.random() * this.qtd));
     // quais runas aparecem no selo (sorteadas a cada tentativa)
     this.simbolos = [...GLIFOS.keys()].sort(() => Math.random() - 0.5).slice(0, this.qtd);
@@ -484,12 +501,12 @@ export class Labirinto extends MiniJogo {
   constructor(options) {
     super(options);
     const d = this.p.dificuldade;
-    this.s = 5 + Math.floor(d / 2);
+    this.s = Math.min(Number(this.aj.maxTamanho) || 10, 5 + Math.floor(d / 2));
     this.#gerar();
     this.vistas = new Set();     // paredes já reveladas: "r,c,dr,dc"
     this.rastro = new Set([this.#chave(this.pos)]);
     // a resistência depende do tamanho, que só existe agora
-    this.vidasMax = this.vidas = this.resistencia();
+    this.ajustarResistencia();
   }
 
   resistencia() { return this.s ? Math.round(this.s * 1.2) + (this.p.expertise ? 2 : 0) : 0; }
@@ -583,7 +600,8 @@ export class Labirinto extends MiniJogo {
     const el = this.element;
     if (!el) return;
     const L = 36;
-    el.querySelector(".lp-lab-rastro").innerHTML = [...this.rastro].map(k => {
+    const rastro = this.aj.mostrarRastro === false ? [] : [...this.rastro];
+    el.querySelector(".lp-lab-rastro").innerHTML = rastro.map(k => {
       const [r, c] = k.split(",").map(Number);
       return `<rect x="${c * L + 3}" y="${r * L + 3}" width="${L - 6}" height="${L - 6}" rx="5"/>`;
     }).join("");
@@ -619,7 +637,7 @@ export class Sigilo extends MiniJogo {
   constructor(options) {
     super(options);
     const d = this.p.dificuldade;
-    this.nNos = Math.min(10, 5 + Math.floor(d / 2));
+    this.nNos = Math.min(Number(this.aj.maxRunas) || 10, 10, 5 + Math.floor(d / 2));
     const alvo = this.nNos + 1 + Math.floor(d / 2);
     // posições num círculo, com um leve desvio para não parecer régua
     this.nos = Array.from({ length: this.nNos }, (_, i) => {
@@ -656,8 +674,9 @@ export class Sigilo extends MiniJogo {
       return `<line class="lp-traco" data-k="${k}" x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}"/>`;
     }).join("");
     // runas sem nenhuma linha não aparecem (só confundiriam)
+    const dica = this.aj.dicaImpar === true;
     const nos = this.nos.map((n, i) => this.grau(i) === 0 ? "" : `
-      <g class="lp-no" data-i="${i}" transform="translate(${n.x} ${n.y})">
+      <g class="lp-no ${dica && this.grau(i) % 2 ? "impar" : ""}" data-i="${i}" transform="translate(${n.x} ${n.y})">
         <circle r="13"/>${glifo(i, 0, 0, 0.7)}
       </g>`).join("");
     return `
@@ -728,7 +747,7 @@ export class Cristais extends MiniJogo {
   constructor(options) {
     super(options);
     const d = this.p.dificuldade;
-    this.g = d <= 3 ? 3 : d <= 7 ? 4 : 5;
+    this.g = Math.min(Number(this.aj.maxGrade) || 5, d <= 3 ? 3 : d <= 7 ? 4 : 5);
     this.luz = Array(this.g * this.g).fill(true);
     // parte do resolvido e toca alguns cristais: sempre tem solução
     this.solucao = new Set();
@@ -795,8 +814,8 @@ export class Canalizar extends MiniJogo {
   constructor(options) {
     super(options);
     const d = this.p.dificuldade;
-    this.faixa = Math.clamp(36 - d * 2, 16, 34);     // altura da faixa (%)
-    this.velFaixa = 8 + d * 2.5;                       // quanto a faixa anda (%/s)
+    this.faixa = Math.clamp((36 - d * 2) * (Number(this.aj.largura) || 1), 10, 60);   // altura da faixa (%)
+    this.velFaixa = (8 + d * 2.5) * (Number(this.aj.velocidade) || 1);                 // quanto a faixa anda (%/s)
     this.centro = 50;
     this.destino = 50;
     this.troca = 0;

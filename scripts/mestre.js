@@ -1,7 +1,7 @@
 // Gazua da Mesa — o que só o mestre pode fazer: trancar, destrancar, gastar chaves.
 // Os jogadores mandam pedidos por socket; o mestre ativo confere e executa.
 
-import { ID, SOCKET, t, esc, cfg, lerFechadura, lerChave, lerGazua, estaTrancada, chaveServe, nomeFechadura } from "./dados.js";
+import { ID, SOCKET, t, esc, cfg, lerFechadura, lerChave, lerGazua, estaTrancada, chaveServe, nomeFechadura, apiDados } from "./dados.js";
 
 const ESTADO = () => CONST.WALL_DOOR_STATES;
 const NIVEL = () => CONST.DOCUMENT_OWNERSHIP_LEVELS;
@@ -36,11 +36,27 @@ export async function mostrarDocumento(uuid) {
   return doc.sheet?.render(true);
 }
 
+// Testes pedidos ao Dados em Cena: o jogador espera aqui a resposta do mestre
+const testesPendentes = new Map();
+
+export function esperarTeste(pedidoId, tempo = 150000) {
+  return new Promise(resolve => {
+    const relogio = setTimeout(() => { testesPendentes.delete(pedidoId); resolve(null); }, tempo);
+    testesPendentes.set(pedidoId, total => { clearTimeout(relogio); testesPendentes.delete(pedidoId); resolve(total); });
+  });
+}
+
+function responderTeste(userId, pedidoId, total) {
+  if (userId === game.user.id) return testesPendentes.get(pedidoId)?.(total);
+  game.socket.emit(SOCKET, { tipo: "resultadoTeste", para: userId, pedidoId, total });
+}
+
 export function aoReceber(msg) {
   if (!msg || typeof msg !== "object") return;
   if (msg.tipo === "pedido" && souMestreAtivo()) return processar(msg.pedido, msg.userId);
   if (msg.tipo === "aviso" && msg.para === game.user.id) return ui.notifications[msg.nivel ?? "info"](t(msg.chave, msg.dados));
   if (msg.tipo === "mostrar" && msg.para?.includes(game.user.id)) return mostrarDocumento(msg.uuid);
+  if (msg.tipo === "resultadoTeste" && msg.para === game.user.id) return testesPendentes.get(msg.pedidoId)?.(msg.total);
 }
 
 // ---------- Chat ----------
@@ -190,19 +206,34 @@ async function gastarItem(item) {
   return item.delete();
 }
 
-/** Gazua com usos: cada falha gasta um; no fim ela quebra. */
-async function desgastarGazua(uuid, actor, userId) {
-  if (!uuid) return;
+/**
+ * A gazua quebra na falha (conforme a opção "Quando a gazua quebra"): some uma unidade do inventário.
+ * Uma gazua marcada pelo mestre pode aguentar mais de uma falha por unidade.
+ */
+async function desgastarGazua(uuid, actor, userId, via) {
+  const modo = cfg("quebraGazua");
+  const quebra = modo === "ambos" || (modo === "testes" && via === "teste") || (modo === "minijogos" && via === "minigame");
+  if (!quebra || !uuid) return;
   const item = await fromUuid(uuid);
+  if (!item || item.parent?.uuid !== actor?.uuid) return;
   const g = lerGazua(item);
-  if (!item || !g || !(g.usosMax > 0) || item.parent?.uuid !== actor?.uuid) return;
-  const usados = (g.usados ?? 0) + 1;
-  if (usados >= g.usosMax) {
-    await gastarItem(item);
-    avisar(userId, "Aviso.GazuaQuebrou", { nome: item.name }, "warn");
-  } else {
+  const limite = Math.max(1, Number(g?.usosMax) || 1);
+  const usados = (Number(g?.usados) || 0) + 1;
+  if (g && usados < limite) {
     await item.update({ [`flags.${ID}.gazua.usados`]: usados });
+    return avisar(userId, "Aviso.GazuaDesgastou", { nome: item.name, n: limite - usados }, "warn");
   }
+  const qtd = Number(item.system?.quantity) || 1;
+  const nome = item.name;
+  if (qtd > 1) {
+    const upd = { "system.quantity": qtd - 1 };
+    if (g) upd[`flags.${ID}.gazua.usados`] = 0;
+    await item.update(upd);
+  } else {
+    await item.delete();
+  }
+  avisar(userId, "Aviso.GazuaQuebrou", { nome, restam: qtd - 1 }, "warn");
+  await anunciar(`<i class="fa-solid fa-screwdriver"></i> ${t("Chat.GazuaQuebrou", { ator: esc(actor?.name ?? t("Chat.Alguem")), nome: esc(nome), restam: qtd - 1 })}`, actor);
 }
 
 // ---------- Pedidos ----------
@@ -212,10 +243,25 @@ export async function processar(pedido, userId) {
     const doc = await fromUuid(pedido.uuid);
     const f = lerFechadura(doc);
     const actor = pedido.actorUuid ? await fromUuid(pedido.actorUuid) : null;
-    if (!doc || !f) return avisar(userId, "Aviso.SemFechadura", {}, "warn");
-    if (!estaTrancada(doc, f)) return avisar(userId, "Aviso.JaAberta");
+    const desistir = () => { if (pedido.tipo === "testeDC") responderTeste(userId, pedido.pedidoId, null); };
+    if (!doc || !f) { desistir(); return avisar(userId, "Aviso.SemFechadura", {}, "warn"); }
+    if (!estaTrancada(doc, f)) { desistir(); return avisar(userId, "Aviso.JaAberta"); }
 
     const nome = esc(nomeFechadura(doc, f));
+
+    if (pedido.tipo === "testeDC") {
+      const api = apiDados();
+      let r = null;
+      try {
+        r = api && await api.pedirTeste({
+          tokenId: pedido.tokenId, actorId: actor?.id, sceneId: pedido.sceneId,
+          config: { kind: "tool", toolKey: "thief", label: t("Teste.Ferramenta") },
+          cd: Number(f.cd), modo: pedido.modo === "simples" ? "chat" : "tela",
+          para: [userId], bonus: Number(pedido.bonus) || 0, tempoLimite: 120000
+        });
+      } catch (e) { console.error(`${ID} | Dados em Cena`, e); }
+      return responderTeste(userId, pedido.pedidoId, r?.total ?? null);
+    }
 
     if (pedido.tipo === "chave") {
       const item = await fromUuid(pedido.itemUuid);
@@ -245,12 +291,13 @@ export async function processar(pedido, userId) {
       const como = t(pedido.via === "minigame" ? "Chat.ComGazua" : "Chat.ComTeste");
       if (pedido.sucesso) return destrancar(doc, { actor, userId, como });
       if (actor) await doc.update({ [`flags.${ID}.fechadura.falhas.${actor.id}`]: falhas + 1 });
-      await desgastarGazua(pedido.gazuaUuid, actor, userId);
       await anunciar(`<i class="fa-solid fa-lock"></i> ${t("Chat.Falhou", { ator: esc(actor?.name ?? t("Chat.Alguem")), nome })}`, actor);
+      await desgastarGazua(pedido.gazuaUuid, actor, userId, pedido.via);
       return;
     }
   } catch (e) {
     console.error(`${ID} | pedido`, pedido, e);
+    if (pedido.tipo === "testeDC") responderTeste(userId, pedido.pedidoId, null);
     avisar(userId, "Aviso.Erro", {}, "error");
   }
 }

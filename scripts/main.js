@@ -7,6 +7,7 @@ import {
 import { aoReceber, destrancar, trancar, souMestreAtivo } from "./mestre.js";
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
 import { configurarFechadura, configurarChave, removerFechadura, PainelFechaduras } from "./config.js";
+import { JanelaMinijogos } from "./ajustes.js";
 
 Hooks.once("init", () => {
   const reg = (nome, dados) => game.settings.register(ID, nome, {
@@ -18,6 +19,29 @@ Hooks.once("init", () => {
   });
   reg("mostrarCD", { scope: "world", config: true, type: Boolean, default: false });
   reg("ferramentasContam", { scope: "world", config: true, type: Boolean, default: true });
+  reg("gazuaEquipada", { scope: "world", config: true, type: Boolean, default: true });
+  reg("quebraGazua", {
+    scope: "world", config: true, type: String, default: "ambos",
+    choices: {
+      ambos: "GAZUAMESA.Opcao.quebraGazua.ambos",
+      testes: "GAZUAMESA.Opcao.quebraGazua.testes",
+      minijogos: "GAZUAMESA.Opcao.quebraGazua.minijogos",
+      nunca: "GAZUAMESA.Opcao.quebraGazua.nunca"
+    }
+  });
+  game.settings.register(ID, "minijogos", { scope: "world", config: false, type: Object, default: {} });
+  game.settings.registerMenu(ID, "menuMinijogos", {
+    name: "GAZUAMESA.Ajustes.Titulo", label: "GAZUAMESA.Ajustes.Abrir", hint: "GAZUAMESA.Ajustes.DicaMenu",
+    icon: "fa-solid fa-puzzle-piece", type: JanelaMinijogos, restricted: true
+  });
+  reg("testeDadosEmCena", {
+    scope: "world", config: true, type: String, default: "animada",
+    choices: {
+      animada: "GAZUAMESA.Opcao.testeDadosEmCena.animada",
+      simples: "GAZUAMESA.Opcao.testeDadosEmCena.simples",
+      desligado: "GAZUAMESA.Opcao.testeDadosEmCena.desligado"
+    }
+  });
   reg("cliquePorta", { scope: "world", config: true, type: Boolean, default: true });
   reg("entrarRegiao", { scope: "world", config: true, type: Boolean, default: true });
   reg("botaoHUD", { scope: "world", config: true, type: Boolean, default: true });
@@ -50,6 +74,7 @@ Hooks.once("ready", () => {
     configurarChave,
     remover: removerFechadura,
     painel: () => PainelFechaduras.abrir(),
+    minijogos: () => new JanelaMinijogos().render({ force: true }),
     destrancar: doc => (souMestreAtivo() ? destrancar(doc) : null),
     trancar: doc => (souMestreAtivo() ? trancar(doc) : null),
     lerFechadura, lerChave, estaTrancada, chaveServe

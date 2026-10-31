@@ -43,6 +43,25 @@
       "ferramentasContam": {
         "Nome": "Thieves' tools count as a lockpick",
         "Dica": "Turn off so only the items you marked as lockpicks can pick locks."
+      },
+      "gazuaEquipada": {
+        "Nome": "The lockpick must be equipped",
+        "Dica": "The character can only pick locks with a lockpick equipped on the sheet (Inventory → equip)."
+      },
+      "testeDadosEmCena": {
+        "Nome": "Thieves' tools check through Dados em Cena",
+        "Dica": "With the Dados em Cena module active, the lockpicking check is requested through it: on the animated screen or the simple screen (chat card). Without the module, the check is rolled from the sheet.",
+        "animada": "Animated screen",
+        "simples": "Simple screen (chat)",
+        "desligado": "Don't use (roll from the sheet)"
+      },
+      "quebraGazua": {
+        "Nome": "When the lockpick breaks",
+        "Dica": "On a failure the lockpick breaks and one unit leaves the inventory (e.g. 20 lockpicks become 19). Choose which failures do this.",
+        "ambos": "On checks and minigames",
+        "testes": "Only on checks",
+        "minijogos": "Only on minigames",
+        "nunca": "Never breaks"
       }
     },
     "Aviso": {
@@ -59,7 +78,9 @@
       "SemTentativas": "You can no longer try to pick this lock.",
       "ErroMacro": "The lock's macro failed. Check the console (F12).",
       "Erro": "Something went wrong with the lock. Check the GM's console (F12).",
-      "GazuaQuebrou": "The lockpick \"{nome}\" broke."
+      "GazuaQuebrou": "Your lockpick \"{nome}\" broke! {restam} left.",
+      "ErroJogo": "The minigame did not open. Check the console (F12) and send me the error.",
+      "GazuaDesgastou": "The lockpick \"{nome}\" bent, but can take {n} more failure(s)."
     },
     "Chat": {
       "Alguem": "Someone",
@@ -68,7 +89,8 @@
       "ComChave": "with the key <em>{chave}</em>",
       "ComGazua": "with a lockpick",
       "ComTeste": "with thieves' tools",
-      "Falhou": "<strong>{ator}</strong> failed to pick <strong>{nome}</strong>."
+      "Falhou": "<strong>{ator}</strong> failed to pick <strong>{nome}</strong>.",
+      "GazuaQuebrou": "<strong>{ator}</strong>'s lockpick broke ({nome}, {restam} left)."
     },
     "Janela": {
       "Trancada": "Locked",
@@ -84,7 +106,7 @@
       "CD": "DC",
       "Minigame": "Lockpick minigame",
       "Esgotou": "You have tried too many times. This lock will not give way for you.",
-      "SemFerramentas": "You need a lockpick.",
+      "SemFerramentas": "You need an equipped lockpick.",
       "Restam": "Attempts left: {n}",
       "FlavorTeste": "Pick the lock: {nome}",
       "NivelCurto": "Level {n}",
@@ -93,18 +115,29 @@
       "Personagem": "Trying with {nome}",
       "JogoSurpresa": "surprise minigame",
       "MinigameComTeste": "Beat the DC, then face: {jogo}",
-      "TesteFalhou": "The lockpick didn't catch: the check missed the DC.",
+      "TesteFalhou": "Check {total}{cd}: the lockpick didn't catch.",
       "ComGazua": "Using: {nome}",
-      "GazuaUsos": "withstands {n} failure(s)"
+      "GazuaUsos": "withstands {n} failure(s)",
+      "Equipe": "Equip the lockpick (\"{nome}\") on the sheet to pick locks: Inventory → equip button.",
+      "AguardandoTeste": "Roll the thieves' tools check on the roll screen.",
+      "TesteSemResposta": "The check was not rolled in time. Try again.",
+      "TestePassou": "Check {total}{cd}: the lockpick caught!",
+      "ComoAbrir": "How to open with a lockpick",
+      "ComoAbrir1": "Have a lockpick <b>equipped</b> on your sheet (Inventory → equip).",
+      "ComoAbrir2": "Stand next to the lock with your token selected.",
+      "ComoAbrir3": "Choose <b>Simple lockpick</b> (just the thieves' tools check) or <b>Lockpick minigame</b>.",
+      "ComoAbrir4": "In the minigame, the check against the DC comes first (if the GM turned it on): on a success the arcane ward appears and you have some time to undo it.",
+      "GazuaQtd": "{n} in inventory"
     },
     "Gazua": {
       "Item": {
         "Titulo": "Lockpick",
         "Bonus": "Bonus",
         "BonusDica": "Added to the lockpicking check and gives +2 s in the minigame per point.",
-        "Usos": "Withstands",
-        "UsosDica": "How many failed attempts before it breaks. 0 = never breaks.",
-        "Salva": "\"{nome}\" is now a lockpick."
+        "Usos": "Failures until it breaks",
+        "UsosDica": "How many failures each unit takes before breaking (1 = breaks on the first failure). When it breaks, one unit leaves the inventory. When it breaks (checks, minigames or both) is set in the module settings.",
+        "Salva": "\"{nome}\" is now a lockpick.",
+        "NaoEquipa": "This kind of item cannot be equipped, and \"The lockpick must be equipped\" is on: it will never work as a lockpick. Use a Tool or Equipment item."
       }
     },
     "Proximas": {
@@ -199,7 +232,12 @@
       "ViraChave": "\"{nome}\" is now a key for this lock. Save the lock.",
       "NenhumaChave": "No item opens this lock yet.",
       "ComPersonagem": "with {nome}",
-      "NaAbaItens": "in the Items tab"
+      "NaAbaItens": "in the Items tab",
+      "Desvincular": "Stop opening this lock (the item still exists)",
+      "Desvinculada": "\"{nome}\" no longer opens this lock.",
+      "ExcluirItem": "Delete the item",
+      "ExcluirPergunta": "Delete <strong>{nome}</strong> for good? This removes the item from the world (or from the character's inventory) and cannot be undone.",
+      "ItemExcluido": "\"{nome}\" was deleted."
     },
     "Chave": {
       "Titulo": "Key or lockpick (Gazua da Mesa)",
@@ -324,6 +362,56 @@
         "Passo2": "The runic band moves. With the mana inside it, the seal fills; outside, it drains.",
         "Passo3": "Fill the seal to 100% before time runs out.",
         "Segurar": "Hold to channel (Space)"
+      }
+    },
+    "Teste": {
+      "Ferramenta": "Thieves' Tools"
+    },
+    "Ajustes": {
+      "Titulo": "Configure minigames",
+      "Abrir": "Configure minigames",
+      "DicaMenu": "Settings for each minigame: whether it is in the draw, its own time, difficulty and options.",
+      "Explicacao": "These settings apply to every lock. A lock that picks a specific minigame uses it even if it is out of the draw.",
+      "NoSorteio": "in the draw",
+      "ForaSorteio": "out of the draw",
+      "Proprias": "This minigame's options",
+      "Testar": "Test now",
+      "Padrao": "Back to default",
+      "Salvo": "Minigame settings saved.",
+      "FechaduraTeste": "Test lock",
+      "Campo": {
+        "ativo": "In the draw (Surprise)",
+        "tempo": "Own time (s)",
+        "ajuste": "Difficulty adjustment",
+        "concentracao": "Extra concentration",
+        "maxAneis": "Maximum rings",
+        "ligacoes": "Rings bound by magic",
+        "inverterDesde": "Reverse order from level",
+        "ritmo": "Sequence speed",
+        "maxTamanho": "Maximum ward size",
+        "mostrarRastro": "Show the path taken",
+        "maxRunas": "Maximum runes",
+        "dicaImpar": "Highlight where to start",
+        "maxGrade": "Maximum grid size",
+        "velocidade": "Band speed",
+        "largura": "Band width"
+      },
+      "Dica": {
+        "ativo": "Off: this game never shows up in Surprise.",
+        "tempo": "0 = use the lock's time limit.",
+        "ajuste": "Added to the lock's level for this game only (−3 easier, +3 harder).",
+        "concentracao": "More (or fewer) concentration gems.",
+        "maxAneis": "From 2 to 5 rings.",
+        "ligacoes": "On: some rings turn along with their neighbour.",
+        "inverterDesde": "0 = never asks for the reverse order.",
+        "ritmo": "1 = normal; 2 = twice as fast; 0.5 = slower.",
+        "maxTamanho": "From 5x5 to 10x10 cells.",
+        "mostrarRastro": "Off: not even the path already taken shows: harder.",
+        "maxRunas": "From 5 to 10 runes in the sigil.",
+        "dicaImpar": "Marks the runes with an odd number of lines (start at one of them).",
+        "maxGrade": "3x3, 4x4 or 5x5 crystals.",
+        "velocidade": "1 = normal; 2 = the band moves twice as fast.",
+        "largura": "1 = normal; 2 = twice as wide (easier)."
       }
     }
   }

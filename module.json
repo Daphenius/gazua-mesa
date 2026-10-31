@@ -2,7 +2,7 @@
   "id": "gazua-mesa",
   "title": "Gazua da Mesa (Em testes)",
   "description": "EM TESTES: ainda não está completo e pode ter muitos erros e vícios de IA. Fechaduras, chaves com segredos, chaves mestras e minigame de gazua para portas, baús, tiles, regiões, portais e diários.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "authors": [
     {
       "name": "Daphenius"
@@ -42,12 +42,17 @@
         "id": "navegador-mapas",
         "type": "module",
         "reason": "Portais e gatilhos do Navegador de Mapas ficam desligados enquanto trancados."
+      },
+      {
+        "id": "dados-em-cena",
+        "type": "module",
+        "reason": "O teste de Ferramentas de Ladrão abre na tela animada ou simples do Dados em Cena."
       }
     ]
   },
   "url": "https://github.com/Daphenius/gazua-mesa",
   "manifest": "https://github.com/Daphenius/gazua-mesa/releases/latest/download/module.json",
-  "download": "https://github.com/Daphenius/gazua-mesa/releases/download/v1.2.0/gazua-mesa.zip",
+  "download": "https://github.com/Daphenius/gazua-mesa/releases/download/v1.3.0/gazua-mesa.zip",
   "license": "LICENSE",
   "readme": "README.md",
   "changelog": "CHANGELOG.md"

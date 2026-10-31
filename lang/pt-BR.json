@@ -43,6 +43,25 @@
       "ferramentasContam": {
         "Nome": "Ferramentas de Ladrão contam como gazua",
         "Dica": "Desligue para que só os itens que você marcou como gazua sirvam para arrombar."
+      },
+      "gazuaEquipada": {
+        "Nome": "A gazua precisa estar equipada",
+        "Dica": "O personagem só consegue arrombar com uma gazua equipada na ficha (Inventário → equipar)."
+      },
+      "testeDadosEmCena": {
+        "Nome": "Teste de Ferramentas de Ladrão pelo Dados em Cena",
+        "Dica": "Com o módulo Dados em Cena ativo, o teste de arrombar é pedido por ele: na tela animada ou na tela simples (card no chat). Sem o módulo, o teste é rolado direto pela ficha.",
+        "animada": "Tela animada",
+        "simples": "Tela simples (chat)",
+        "desligado": "Não usar (rolar pela ficha)"
+      },
+      "quebraGazua": {
+        "Nome": "Quando a gazua quebra",
+        "Dica": "Ao falhar, a gazua quebra e sai uma unidade do inventário (ex.: 20 gazuas viram 19). Escolha em quais falhas isso acontece.",
+        "ambos": "Nos testes e nos minijogos",
+        "testes": "Só nos testes",
+        "minijogos": "Só nos minijogos",
+        "nunca": "Nunca quebra"
       }
     },
     "Aviso": {
@@ -59,7 +78,9 @@
       "SemTentativas": "Você não consegue mais tentar arrombar esta fechadura.",
       "ErroMacro": "A macro da fechadura falhou. Veja o console (F12).",
       "Erro": "Algo deu errado com a fechadura. Veja o console do mestre (F12).",
-      "GazuaQuebrou": "A gazua \"{nome}\" quebrou."
+      "GazuaQuebrou": "Sua gazua \"{nome}\" quebrou! Restam {restam}.",
+      "ErroJogo": "O minijogo não abriu. Veja o console (F12) e me mande o erro.",
+      "GazuaDesgastou": "A gazua \"{nome}\" entortou, mas aguenta mais {n} falha(s)."
     },
     "Chat": {
       "Alguem": "Alguém",
@@ -68,7 +89,8 @@
       "ComChave": "com a chave <em>{chave}</em>",
       "ComGazua": "com a gazua",
       "ComTeste": "com ferramentas de ladrão",
-      "Falhou": "<strong>{ator}</strong> não conseguiu arrombar <strong>{nome}</strong>."
+      "Falhou": "<strong>{ator}</strong> não conseguiu arrombar <strong>{nome}</strong>.",
+      "GazuaQuebrou": "A gazua de <strong>{ator}</strong> quebrou ({nome}, restam {restam})."
     },
     "Janela": {
       "Trancada": "Trancada",
@@ -84,7 +106,7 @@
       "CD": "CD",
       "Minigame": "Gazua com minijogo",
       "Esgotou": "Você já tentou demais. Esta fechadura não cede para você.",
-      "SemFerramentas": "Você precisa de uma gazua.",
+      "SemFerramentas": "Você precisa de uma gazua equipada.",
       "Restam": "Tentativas restantes: {n}",
       "FlavorTeste": "Arrombar: {nome}",
       "NivelCurto": "Nível {n}",
@@ -93,18 +115,29 @@
       "Personagem": "Tentando com {nome}",
       "JogoSurpresa": "minijogo surpresa",
       "MinigameComTeste": "Passe na CD e encare: {jogo}",
-      "TesteFalhou": "A gazua não pegou: o teste não alcançou a CD.",
+      "TesteFalhou": "Teste {total}{cd}: a gazua não pegou.",
       "ComGazua": "Usando: {nome}",
-      "GazuaUsos": "aguenta {n} falha(s)"
+      "GazuaUsos": "aguenta {n} falha(s)",
+      "Equipe": "Equipe a gazua (\"{nome}\") na ficha para poder arrombar: Inventário → botão de equipar.",
+      "AguardandoTeste": "Role o teste de Ferramentas de Ladrão na tela de rolagem.",
+      "TesteSemResposta": "O teste não foi rolado a tempo. Tente de novo.",
+      "TestePassou": "Teste {total}{cd}: a gazua pegou!",
+      "ComoAbrir": "Como abrir com a gazua",
+      "ComoAbrir1": "Tenha uma gazua <b>equipada</b> na ficha (Inventário → equipar).",
+      "ComoAbrir2": "Fique ao lado da fechadura com o seu token selecionado.",
+      "ComoAbrir3": "Escolha <b>Gazua simples</b> (só o teste de Ferramentas de Ladrão) ou <b>Gazua com minijogo</b>.",
+      "ComoAbrir4": "No minijogo, primeiro vem o teste contra a CD (se o mestre ligou): passando, a proteção arcana aparece e você tem um tempo para desfazê-la.",
+      "GazuaQtd": "{n} no inventário"
     },
     "Gazua": {
       "Item": {
         "Titulo": "Gazua",
         "Bonus": "Bônus",
         "BonusDica": "Soma no teste de arrombar e dá +2 s no minijogo por ponto.",
-        "Usos": "Aguenta",
-        "UsosDica": "Quantas tentativas fracassadas antes de quebrar. 0 = não quebra.",
-        "Salva": "\"{nome}\" agora é uma gazua."
+        "Usos": "Falhas até quebrar",
+        "UsosDica": "Quantas falhas cada unidade aguenta antes de quebrar (1 = quebra na primeira falha). Ao quebrar, sai uma unidade do inventário. Quando quebra (testes, minijogos ou os dois) é definido nas configurações do módulo.",
+        "Salva": "\"{nome}\" agora é uma gazua.",
+        "NaoEquipa": "Este tipo de item não pode ser equipado, e a opção \"A gazua precisa estar equipada\" está ligada: ele nunca vai funcionar como gazua. Use uma Ferramenta ou um Equipamento."
       }
     },
     "Proximas": {
@@ -199,7 +232,12 @@
       "ViraChave": "\"{nome}\" agora é uma chave desta fechadura. Salve a fechadura.",
       "NenhumaChave": "Nenhum item abre esta fechadura ainda.",
       "ComPersonagem": "com {nome}",
-      "NaAbaItens": "na aba de Itens"
+      "NaAbaItens": "na aba de Itens",
+      "Desvincular": "Deixar de abrir esta fechadura (o item continua existindo)",
+      "Desvinculada": "\"{nome}\" não abre mais esta fechadura.",
+      "ExcluirItem": "Excluir o item",
+      "ExcluirPergunta": "Excluir <strong>{nome}</strong> de vez? Isso apaga o item do mundo (ou do inventário do personagem) e não dá para desfazer.",
+      "ItemExcluido": "\"{nome}\" foi excluído."
     },
     "Chave": {
       "Titulo": "Chave ou gazua (Gazua da Mesa)",
@@ -324,6 +362,56 @@
         "Passo2": "A faixa rúnica se move. Com a mana dentro dela, o selo enche; fora, ele esvazia.",
         "Passo3": "Encha o selo até 100% antes do tempo acabar.",
         "Segurar": "Segurar para canalizar (Espaço)"
+      }
+    },
+    "Teste": {
+      "Ferramenta": "Ferramentas de Ladrão"
+    },
+    "Ajustes": {
+      "Titulo": "Configurar minijogos",
+      "Abrir": "Configurar minijogos",
+      "DicaMenu": "Ajustes de cada minijogo: se entra no sorteio, tempo próprio, dificuldade e opções.",
+      "Explicacao": "Estes ajustes valem para todas as fechaduras. Uma fechadura que escolhe um minijogo específico usa esse jogo mesmo que ele esteja fora do sorteio.",
+      "NoSorteio": "no sorteio",
+      "ForaSorteio": "fora do sorteio",
+      "Proprias": "Opções deste minijogo",
+      "Testar": "Testar agora",
+      "Padrao": "Voltar ao padrão",
+      "Salvo": "Configuração dos minijogos salva.",
+      "FechaduraTeste": "Fechadura de teste",
+      "Campo": {
+        "ativo": "Entra no sorteio (Surpresa)",
+        "tempo": "Tempo próprio (s)",
+        "ajuste": "Ajuste de dificuldade",
+        "concentracao": "Concentração extra",
+        "maxAneis": "Máximo de anéis",
+        "ligacoes": "Anéis presos por magia",
+        "inverterDesde": "Ordem inversa a partir do nível",
+        "ritmo": "Velocidade da sequência",
+        "maxTamanho": "Tamanho máximo da trama",
+        "mostrarRastro": "Mostrar o caminho percorrido",
+        "maxRunas": "Máximo de runas",
+        "dicaImpar": "Destacar por onde começar",
+        "maxGrade": "Tamanho máximo da grade",
+        "velocidade": "Velocidade da faixa",
+        "largura": "Largura da faixa"
+      },
+      "Dica": {
+        "ativo": "Desligado, este jogo não aparece na Surpresa.",
+        "tempo": "0 = usa o tempo limite da fechadura.",
+        "ajuste": "Soma ao nível da fechadura só neste jogo (−3 deixa mais fácil, +3 mais difícil).",
+        "concentracao": "Gemas a mais (ou a menos) de concentração.",
+        "maxAneis": "De 2 a 5 anéis.",
+        "ligacoes": "Ligado, alguns anéis giram junto com o vizinho.",
+        "inverterDesde": "0 = nunca pede a ordem inversa.",
+        "ritmo": "1 = normal; 2 = duas vezes mais rápido; 0,5 = mais devagar.",
+        "maxTamanho": "De 5x5 a 10x10 casas.",
+        "mostrarRastro": "Desligado, nem o caminho já feito aparece: mais difícil.",
+        "maxRunas": "De 5 a 10 runas no sigilo.",
+        "dicaImpar": "Marca as runas com número ímpar de linhas (é por uma delas que se começa).",
+        "maxGrade": "3x3, 4x4 ou 5x5 cristais.",
+        "velocidade": "1 = normal; 2 = a faixa anda duas vezes mais rápido.",
+        "largura": "1 = normal; 2 = faixa duas vezes mais larga (mais fácil)."
       }
     }
   }

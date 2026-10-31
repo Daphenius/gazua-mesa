@@ -350,3 +350,26 @@
 .lp-canalizar .lp-segurar { margin-top: 8px; font-weight: 700; }
 .lp-canalizar .lp-segurar:active { background: color-mix(in srgb, var(--lp-mana) 20%, transparent); }
 .lp-jogo .lp-largo { width: 100%; }
+
+/* ações em cada chave da lista */
+.lp-config .lp-chaves-da .lp-acao-chave { padding: 4px 6px; border-radius: 6px; opacity: 0.7; cursor: pointer; }
+.lp-config .lp-chaves-da .lp-acao-chave:hover { opacity: 1; background: var(--lp-cartao-forte); }
+.lp-config .lp-chaves-da .lp-perigo:hover { color: var(--lp-vermelho); }
+
+/* Configurar minijogos */
+.lp-ajustes .window-content { overflow-y: auto; }
+.lp-ajustes .lp-ajuste-jogo > summary { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; text-transform: none; letter-spacing: 0; }
+.lp-ajustes .lp-ajuste-jogo > summary i { color: var(--lp-ouro); width: 1.2rem; text-align: center; }
+.lp-ajustes .lp-estado-jogo { margin-left: auto; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 1px 8px; border-radius: 8px; background: var(--lp-cartao-forte); opacity: 0.8; }
+.lp-ajustes .lp-estado-jogo.on { background: var(--lp-ouro-suave); color: var(--lp-ouro); }
+.lp-ajustes .lp-rodape { position: sticky; bottom: 0; padding-top: 0.4rem; background: inherit; }
+.lp-ajustes .lp-config { gap: 0.5rem; }
+
+/* Ajuda e avisos na janela do jogador */
+.lp-janela .lp-como-abrir { margin-top: 0.5rem; font-size: 0.82rem; opacity: 0.9; }
+.lp-janela .lp-como-abrir summary { cursor: pointer; }
+.lp-janela .lp-como-abrir ol { margin: 0.3rem 0 0 1.1rem; padding: 0; }
+.lp-janela .lp-como-abrir li { margin: 0.15rem 0; }
+
+/* Sigilo: dica de onde começar */
+.lp-sigilo .lp-no.impar circle { stroke: #ffd36b; stroke-dasharray: 3 2; }

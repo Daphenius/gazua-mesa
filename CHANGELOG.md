@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.3.0
+- **Gazua equipada**: para arrombar, a gazua precisa estar equipada na ficha (opção nas configurações, ligada por padrão). Se o personagem tiver uma gazua guardada, a janela avisa para equipar.
+- **Teste pelo Dados em Cena**: com o módulo Dados em Cena ativo, o teste de Ferramentas de Ladrão é pedido na tela animada ou na tela simples (card no chat), conforme a opção do módulo. A tela animada abre só para o jogador e o mestre. Sem o Dados em Cena, o teste é rolado pela ficha, como antes.
+- **Configurar minijogos**: nova tela (Configurações do módulo, ou o painel do mestre) com os ajustes de cada minijogo: entra ou não no sorteio da Surpresa, tempo próprio, ajuste de dificuldade, concentração extra e opções do jogo (máximo de anéis, anéis presos por magia, ordem inversa, velocidade, tamanho da trama, rastro, dica de onde começar, tamanho da grade, velocidade e largura da faixa). Cada um tem um botão **Testar agora**.
+- **A gazua quebra na falha**: cada falha tira uma unidade do inventário (20 gazuas viram 19) e o chat avisa. Nova opção **Quando a gazua quebra**: nos testes e nos minijogos (padrão), só nos testes, só nos minijogos ou nunca. Uma gazua marcada pelo mestre pode aguentar mais de uma falha por unidade ("Falhas até quebrar").
+- A janela do jogador mostra o resultado do teste (passou ou não) e ganhou um "Como abrir com a gazua".
+- Se um minijogo não conseguir abrir, aparece um aviso com o erro no console, em vez de a janela ficar presa.
+
+## v1.2.1
+- Na lista de chaves da configuração da fechadura, cada item ganhou dois botões: **deixar de abrir esta fechadura** (o item continua existindo e, se não sobrar nenhum segredo, volta a ser um item comum) e **excluir o item** (pede confirmação).
+
 ## v1.2.0
 - Saiu o minijogo de pinos. No lugar, seis minijogos próprios do módulo, todos com tema rúnico e mágico (a fechadura tem uma proteção arcana que a gazua precisa desfazer):
   - **Anéis rúnicos**: gire os anéis até a runa brilhante de cada um ficar sob o sigilo; alguns anéis estão presos por magia e arrastam o vizinho junto.
