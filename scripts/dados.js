@@ -140,12 +140,22 @@ export function itensGazua(actor) {
   return [...marcadas, ...ferramentas];
 }
 
+/** Usos do item na ficha (coluna "Usos" do D&D 5e): { max, restam } ou null se o item não tem usos. */
+export function usosItem(item) {
+  const u = item?.system?.uses;
+  const max = Number(u?.max) || 0;
+  if (!u || !(max > 0)) return null;
+  const gastos = Number(u.spent) || 0;
+  return { max, gastos, restam: Math.max(0, max - gastos) };
+}
+
 export const estaEquipada = item => item?.system?.equipped === true;
 
 /** As gazuas que o personagem pode usar agora (equipadas, se a opção exigir). */
 export function gazuasDoAtor(actor) {
   const todas = itensGazua(actor);
-  return cfg("gazuaEquipada") ? todas.filter(estaEquipada) : todas;
+  const comUso = todas.filter(i => usosItem(i)?.restam !== 0);   // usos esgotados não servem
+  return cfg("gazuaEquipada") ? comUso.filter(estaEquipada) : comUso;
 }
 
 /** Uma gazua que o personagem tem, mas não equipou (para avisar o jogador). */

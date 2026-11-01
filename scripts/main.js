@@ -2,7 +2,7 @@
 
 import {
   ID, SOCKET, TIPOS, t, cfg, lerFechadura, lerChave, estaTrancada, podeTerFechadura, chaveServe,
-  regiaoContem, centroToken
+  regiaoContem, centroToken, lerGazua
 } from "./dados.js";
 import { aoReceber, destrancar, trancar, souMestreAtivo } from "./mestre.js";
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
@@ -192,6 +192,15 @@ for (const tipo of [...TIPOS, "Item"]) {
   Hooks.on(`update${tipo}`, doc => atualizarJanelas(doc));
 }
 Hooks.on("createItem", doc => atualizarJanelas(doc));
+
+// Gazua ou chave dada a um token NÃO vinculado de um personagem de jogador: ela fica só naquele
+// token e some da ficha do personagem (ao entrar de novo, ao recriar o token). Avisa o mestre.
+Hooks.on("createItem", item => {
+  const ator = item.parent;
+  if (!souMestreAtivo() || !ator?.isToken || !ator.hasPlayerOwner) return;
+  if (!lerGazua(item) && !lerChave(item)) return;
+  ui.notifications.warn(t("Aviso.TokenNaoVinculado", { item: item.name, ator: ator.name }), { permanent: true });
+});
 
 Hooks.on("deleteItem", doc => atualizarJanelas(doc));
 Hooks.on("controlToken", () => atualizarJanelas(null));

@@ -1,7 +1,7 @@
 // Gazua da Mesa — o que só o mestre pode fazer: trancar, destrancar, gastar chaves.
 // Os jogadores mandam pedidos por socket; o mestre ativo confere e executa.
 
-import { ID, SOCKET, t, esc, cfg, lerFechadura, lerChave, lerGazua, estaTrancada, chaveServe, nomeFechadura, apiDados } from "./dados.js";
+import { ID, SOCKET, t, esc, cfg, lerFechadura, lerChave, lerGazua, usosItem, estaTrancada, chaveServe, nomeFechadura, apiDados } from "./dados.js";
 
 const ESTADO = () => CONST.WALL_DOOR_STATES;
 const NIVEL = () => CONST.DOCUMENT_OWNERSHIP_LEVELS;
@@ -223,17 +223,36 @@ async function desgastarGazua(uuid, actor, userId, via) {
     await item.update({ [`flags.${ID}.gazua.usados`]: usados });
     return avisar(userId, "Aviso.GazuaDesgastou", { nome: item.name, n: limite - usados }, "warn");
   }
-  const qtd = Number(item.system?.quantity) || 1;
   const nome = item.name;
-  if (qtd > 1) {
-    const upd = { "system.quantity": qtd - 1 };
-    if (g) upd[`flags.${ID}.gazua.usados`] = 0;
-    await item.update(upd);
+  const qtd = Number(item.system?.quantity) || 1;
+  const usos = usosItem(item);
+  let restam;
+  if (usos) {
+    // gazuas contadas nos "Usos" da ficha: cada quebra gasta um uso
+    const extra = g ? { [`flags.${ID}.gazua.usados`]: 0 } : {};
+    if (usos.restam > 1) {
+      await item.update({ "system.uses.spent": usos.gastos + 1, ...extra });
+      restam = usos.restam - 1 + usos.max * (qtd - 1);
+    } else if (qtd > 1) {
+      await item.update({ "system.quantity": qtd - 1, "system.uses.spent": 0, ...extra });
+      restam = usos.max * (qtd - 1);
+    } else {
+      await item.delete();
+      restam = 0;
+    }
   } else {
-    await item.delete();
+    if (qtd > 1) {
+      const upd = { "system.quantity": qtd - 1 };
+      if (g) upd[`flags.${ID}.gazua.usados`] = 0;
+      await item.update(upd);
+    } else {
+      await item.delete();
+    }
+    restam = qtd - 1;
   }
-  avisar(userId, "Aviso.GazuaQuebrou", { nome, restam: qtd - 1 }, "warn");
-  await anunciar(`<i class="fa-solid fa-screwdriver"></i> ${t("Chat.GazuaQuebrou", { ator: esc(actor?.name ?? t("Chat.Alguem")), nome: esc(nome), restam: qtd - 1 })}`, actor);
+  avisar(userId, "Aviso.GazuaQuebrou", { nome, restam }, "warn");
+  await anunciar(`<i class="fa-solid fa-screwdriver"></i> ${t("Chat.GazuaQuebrou", { ator: esc(actor?.name ?? t("Chat.Alguem")), nome: esc(nome), restam })}`, actor);
+  if (restam <= 0) console.info(`${ID} | "${nome}" de ${actor?.name} acabou e foi removida do inventário (todas as gazuas quebraram).`);
 }
 
 // ---------- Pedidos ----------

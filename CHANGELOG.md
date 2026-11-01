@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.5.1
+- **Gazuas na coluna "Usos" da ficha**: o campo **Gazuas** da configuração agora grava nos usos do item (ex.: 20/20). Cada gazua que quebra gasta um uso (19/20…). Acabando os usos, o item sai do inventário; se o item tiver mais de uma unidade, abre a próxima com os usos cheios. Itens sem usos (como "loot") continuam contando pela quantidade. A **Nova gazua** do painel já vem com 20 usos.
+- Gazua com os usos esgotados deixa de contar para arrombar.
+- **Aviso de token não vinculado**: quando uma gazua ou chave é dada ao token de um personagem de jogador que não está vinculado à ficha, o mestre recebe um aviso. Itens assim ficam só naquele token e somem da ficha do personagem (por exemplo, quando o jogador entra de novo).
+
 ## v1.5.0
 - **Aviso do libWrapper resolvido de vez**: a Gazua não mexe mais em nenhuma função do Foundry, nem pelo libWrapper. Ela só "ouve" o clique no ícone da porta, então nunca mais entra no aviso de conflito com o Arm's Reach ou o Objetos Vivos. O libWrapper deixou de ser recomendado.
 - **Quantidade de gazuas**: a configuração da gazua ganhou o campo **Quantidade** (ex.: 20). O item fica empilhado na ficha, como qualquer item com quantidade, e cada gazua que quebra tira uma. A **Nova gazua** do painel já vem com 20.

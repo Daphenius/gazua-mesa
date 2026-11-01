@@ -80,7 +80,8 @@
       "Erro": "Algo deu errado com a fechadura. Veja o console do mestre (F12).",
       "GazuaQuebrou": "Sua gazua \"{nome}\" quebrou! Restam {restam}.",
       "ErroJogo": "O minijogo não abriu. Veja o console (F12) e me mande o erro.",
-      "GazuaDesgastou": "A gazua \"{nome}\" entortou, mas aguenta mais {n} falha(s)."
+      "GazuaDesgastou": "A gazua \"{nome}\" entortou, mas aguenta mais {n} falha(s).",
+      "TokenNaoVinculado": "\"{item}\" foi dado ao token de {ator}, que não está vinculado à ficha. Itens assim ficam só neste token e somem da ficha do personagem (por exemplo, quando o jogador entra de novo). Ligue \"Vincular dados do ator\" no token do personagem."
     },
     "Chat": {
       "Alguem": "Alguém",
@@ -127,7 +128,7 @@
       "ComoAbrir2": "Fique ao lado da fechadura com o seu token selecionado.",
       "ComoAbrir3": "Escolha <b>Gazua simples</b> (só o teste de Ferramentas de Ladrão) ou <b>Gazua com minijogo</b>.",
       "ComoAbrir4": "No minijogo, primeiro vem o teste contra a CD (se o mestre ligou): passando, a proteção arcana aparece e você tem um tempo para desfazê-la.",
-      "GazuaQtd": "{n} no inventário"
+      "GazuaQtd": "{n} gazua(s)"
     },
     "Gazua": {
       "Item": {
@@ -138,8 +139,9 @@
         "UsosDica": "Quantas falhas cada unidade aguenta antes de quebrar (1 = quebra na primeira falha). Ao quebrar, sai uma unidade do inventário. Quando quebra (testes, minijogos ou os dois) é definido nas configurações do módulo.",
         "Salva": "\"{nome}\" agora é uma gazua.",
         "NaoEquipa": "Este tipo de item não pode ser equipado, e a opção \"A gazua precisa estar equipada\" está ligada: ele nunca vai funcionar como gazua. Use uma Ferramenta ou um Equipamento.",
-        "Quantidade": "Quantidade",
-        "QuantidadeDica": "Quantas gazuas o personagem tem neste item (fica na ficha, como qualquer item empilhável). Cada vez que uma quebra, a quantidade diminui em 1."
+        "Quantidade": "Gazuas",
+        "QuantidadeDica": "Quantas gazuas o personagem tem. Aparecem na coluna \"Usos\" da ficha (ex.: 20/20) e cada uma que quebra gasta um uso. Acabando os usos, o item sai do inventário.",
+        "QuantidadeDicaSemUsos": "Este tipo de item não tem \"Usos\" na ficha, então as gazuas ficam na quantidade do item. Use uma Ferramenta para ver na coluna \"Usos\"."
       }
     },
     "Proximas": {

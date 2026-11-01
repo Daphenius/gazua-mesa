@@ -1,7 +1,7 @@
 // Gazua da Mesa — telas do mestre: configurar fechadura, configurar chave e o painel da cena.
 
 import {
-  ID, t, esc, PADRAO_FECHADURA, PADRAO_CHAVE, PADRAO_GAZUA, lerFechadura, lerChave, lerGazua, estaTrancada, podeTerFechadura,
+  ID, t, esc, PADRAO_FECHADURA, PADRAO_CHAVE, PADRAO_GAZUA, lerFechadura, lerChave, lerGazua, usosItem, estaTrancada, podeTerFechadura,
   nomeFechadura, iconeTipo, gerarSegredo, segredos, todasFechaduras, centroDoc, REMOTOS
 } from "./dados.js";
 import { sincronizar, destrancar, trancar } from "./mestre.js";
@@ -379,6 +379,7 @@ export async function configurarChave(item) {
         <div class="lp-icone"><img src="${esc(item.img)}" alt=""></div>
         <div class="lp-cabeca-txt"><small>${t("Chave.Titulo")}</small><strong>${esc(item.name)}</strong></div>
       </div>
+      ${item.parent?.isToken && item.parent.hasPlayerOwner ? `<p class="lp-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${t("Aviso.TokenNaoVinculado", { item: esc(item.name), ator: esc(item.parent.name) })}</p>` : ""}
       ${secao("fa-tag", t("Chave.QueTipo"), `<div class="lp-modos lp-tres">${tipos}</div>`)}
       ${secao("fa-hashtag", t("Chave.Segredos"), linha("", `<input type="text" name="segredos" value="${esc(chave.segredos)}" placeholder="${esc(t("Config.SegredosExemplo"))}">`, t("Chave.SegredosDica")), "lp-so-chave")}
       ${secao("fa-crown", t("Chave.Limites"), `
@@ -388,7 +389,8 @@ export async function configurarChave(item) {
       ${secao("fa-screwdriver", t("Gazua.Item.Titulo"), `
         ${cfgEquip && !equipavel ? `<p class="lp-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${t("Gazua.Item.NaoEquipa")}</p>` : ""}
         ${linha(t("Gazua.Item.Bonus"), `<input type="number" name="bonus" min="0" max="10" value="${gazua.bonus}">`, t("Gazua.Item.BonusDica"))}
-        ${linha(t("Gazua.Item.Quantidade"), `<input type="number" name="quantidade" min="0" max="999" value="${Number(item.system?.quantity) || 1}">`, t("Gazua.Item.QuantidadeDica"))}
+        ${linha(t("Gazua.Item.Quantidade"), `<input type="number" name="quantidade" min="0" max="999" value="${usosItem(item)?.restam ?? (Number(item.system?.quantity) || 1)}">`,
+          t(item.system?.uses ? "Gazua.Item.QuantidadeDica" : "Gazua.Item.QuantidadeDicaSemUsos"))}
         ${linha(t("Gazua.Item.Usos"), `<input type="number" name="usosGazua" min="1" value="${Math.max(1, gazua.usosMax)}">
           <label class="lp-inline"><input type="checkbox" name="zerarGazua"> ${t("Chave.Zerar", { n: gazua.usados })}</label>`, t("Gazua.Item.UsosDica"))}`, "lp-so-gazua")}
     </div>`;
@@ -435,7 +437,13 @@ export async function configurarChave(item) {
     if (r.zerarGazua) nova.usados = 0;
     if (c) await item.unsetFlag(ID, "chave");
     const upd = { [`flags.${ID}.gazua`]: nova };
-    if (item.system && "quantity" in item.system) upd["system.quantity"] = Math.max(0, Math.floor(Number(r.quantidade) || 0));
+    const n = Math.max(0, Math.floor(Number(r.quantidade) || 0));
+    if (item.system?.uses) {
+      // as gazuas ficam nos "Usos" da ficha (ex.: 20/20); só mexe se o número mudou
+      if (n !== usosItem(item)?.restam) { upd["system.uses.max"] = String(n); upd["system.uses.spent"] = 0; }
+    } else if (item.system && "quantity" in item.system) {
+      upd["system.quantity"] = n;
+    }
     await item.update(upd);
     return ui.notifications.info(t("Gazua.Item.Salva", { nome: item.name }));
   }
@@ -582,7 +590,7 @@ export class PainelFechaduras extends ApplicationV2 {
     const type = tipos.includes("tool") ? "tool" : tipos.includes("loot") ? "loot" : (tipos.find(x => x !== "base") ?? "base");
     const item = await Item.implementation.create({
       name: t("Painel.NomeNovaGazua"), type, img: "icons/tools/hand/lockpicks-steel-grey.webp",
-      system: { quantity: 20 },
+      system: { quantity: 1, uses: { max: "20", spent: 0 } },
       flags: { [ID]: { gazua: { ...PADRAO_GAZUA } } }
     });
     item?.sheet?.render(true);

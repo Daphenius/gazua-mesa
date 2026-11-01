@@ -80,7 +80,8 @@
       "Erro": "Something went wrong with the lock. Check the GM's console (F12).",
       "GazuaQuebrou": "Your lockpick \"{nome}\" broke! {restam} left.",
       "ErroJogo": "The minigame did not open. Check the console (F12) and send me the error.",
-      "GazuaDesgastou": "The lockpick \"{nome}\" bent, but can take {n} more failure(s)."
+      "GazuaDesgastou": "The lockpick \"{nome}\" bent, but can take {n} more failure(s).",
+      "TokenNaoVinculado": "\"{item}\" was given to {ator}'s token, which is not linked to the sheet. Such items stay only on this token and disappear from the character sheet (for example, when the player logs in again). Turn on \"Link Actor Data\" for the character's token."
     },
     "Chat": {
       "Alguem": "Someone",
@@ -127,7 +128,7 @@
       "ComoAbrir2": "Stand next to the lock with your token selected.",
       "ComoAbrir3": "Choose <b>Simple lockpick</b> (just the thieves' tools check) or <b>Lockpick minigame</b>.",
       "ComoAbrir4": "In the minigame, the check against the DC comes first (if the GM turned it on): on a success the arcane ward appears and you have some time to undo it.",
-      "GazuaQtd": "{n} in inventory"
+      "GazuaQtd": "{n} lockpick(s)"
     },
     "Gazua": {
       "Item": {
@@ -138,8 +139,9 @@
         "UsosDica": "How many failures each unit takes before breaking (1 = breaks on the first failure). When it breaks, one unit leaves the inventory. When it breaks (checks, minigames or both) is set in the module settings.",
         "Salva": "\"{nome}\" is now a lockpick.",
         "NaoEquipa": "This kind of item cannot be equipped, and \"The lockpick must be equipped\" is on: it will never work as a lockpick. Use a Tool or Equipment item.",
-        "Quantidade": "Quantity",
-        "QuantidadeDica": "How many lockpicks this item holds (shown on the sheet like any stackable item). Each time one breaks, the quantity goes down by 1."
+        "Quantidade": "Lockpicks",
+        "QuantidadeDica": "How many lockpicks the character has. They show in the sheet's \"Uses\" column (e.g. 20/20) and each one that breaks spends a use. When the uses run out, the item leaves the inventory.",
+        "QuantidadeDicaSemUsos": "This kind of item has no \"Uses\" on the sheet, so the lockpicks are kept in the item's quantity. Use a Tool to see them in the \"Uses\" column."
       }
     },
     "Proximas": {

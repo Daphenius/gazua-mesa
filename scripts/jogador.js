@@ -2,7 +2,7 @@
 
 import {
   ID, t, esc, cfg, REMOTOS, lerFechadura, lerChave, estaTrancada, chaveServe, nomeFechadura, iconeTipo,
-  chavesDoAtor, gazuaDoAtor, gazuaGuardada, lerGazua, apiDados, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
+  chavesDoAtor, gazuaDoAtor, gazuaGuardada, lerGazua, usosItem, apiDados, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
 } from "./dados.js";
 import { pedir, esperarTeste } from "./mestre.js";
 import { jogar, escolherJogo, parametros, JOGOS } from "./jogos.js";
@@ -31,6 +31,13 @@ export function atualizarJanelas(doc) {
   for (const app of foundry.applications.instances?.values?.() ?? []) {
     if (app instanceof JanelaProximas) app.render();
   }
+}
+
+/** Quantas gazuas o item representa: usos restantes (coluna "Usos") e as outras unidades. */
+function totalGazuas(item) {
+  const qtd = Number(item?.system?.quantity) || 1;
+  const u = usosItem(item);
+  return u ? u.restam + u.max * (qtd - 1) : qtd;
 }
 
 export class JanelaFechadura extends ApplicationV2 {
@@ -125,7 +132,7 @@ export class JanelaFechadura extends ApplicationV2 {
       if (gazua && !bloqueio) {
         const g = lerGazua(gazua);
         const info = g ? [g.bonus > 0 ? `+${g.bonus}` : "", g.usosMax > 1 ? t("Janela.GazuaUsos", { n: g.usosMax - g.usados }) : "",
-          Number(gazua.system?.quantity) > 1 ? t("Janela.GazuaQtd", { n: gazua.system.quantity }) : ""].filter(Boolean).join(" · ") : "";
+          totalGazuas(gazua) > 1 ? t("Janela.GazuaQtd", { n: totalGazuas(gazua) }) : ""].filter(Boolean).join(" · ") : "";
         corpo += `<p class="lp-gazua-usada"><img src="${esc(gazua.img)}" alt=""> ${t("Janela.ComGazua", { nome: esc(gazua.name) })}${info ? ` <em>${info}</em>` : ""}</p>`;
       }
       if (bloqueio) corpo += `<p class="lp-bloqueio"><i class="fa-solid fa-ban"></i> ${bloqueio}</p>`;

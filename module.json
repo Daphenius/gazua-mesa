@@ -2,7 +2,7 @@
   "id": "gazua-mesa",
   "title": "Gazua da Mesa (Em testes)",
   "description": "EM TESTES: ainda não está completo e pode ter muitos erros e vícios de IA. Fechaduras, chaves com segredos, chaves mestras e minigame de gazua para portas, baús, tiles, regiões, portais e diários.",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "authors": [
     {
       "name": "Daphenius"
@@ -52,7 +52,7 @@
   },
   "url": "https://github.com/Daphenius/gazua-mesa",
   "manifest": "https://github.com/Daphenius/gazua-mesa/releases/latest/download/module.json",
-  "download": "https://github.com/Daphenius/gazua-mesa/releases/download/v1.5.0/gazua-mesa.zip",
+  "download": "https://github.com/Daphenius/gazua-mesa/releases/download/v1.5.1/gazua-mesa.zip",
   "license": "LICENSE",
   "readme": "README.md",
   "changelog": "CHANGELOG.md"
