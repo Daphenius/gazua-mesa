@@ -46,23 +46,32 @@ Hooks.once("init", () => {
   reg("entrarRegiao", { scope: "world", config: true, type: Boolean, default: true });
   reg("botaoHUD", { scope: "world", config: true, type: Boolean, default: true });
 
-  // Clique do jogador numa porta trancada abre a janela da fechadura
-  const DC = foundry.canvas?.containers?.DoorControl;
-  const original = DC?.prototype?._onMouseDown;
-  if (typeof original === "function") {
-    DC.prototype._onMouseDown = function (event) {
-      try {
-        if (interceptarPorta(this.wall?.document)) {
-          event?.stopPropagation?.();
-          return false;
-        }
-      } catch (e) { console.error(`${ID} | porta`, e); }
-      return original.call(this, event);
-    };
+  // Clique do jogador numa porta trancada abre a janela da fechadura.
+  // Com o libWrapper ativo, registra por ele (convive com Arm's Reach e outros);
+  // sem ele, envolve o método direto.
+  const ALVO = "foundry.canvas.containers.DoorControl.prototype._onMouseDown";
+  const aoClicarPorta = function (wrapped, event) {
+    try {
+      if (interceptarPorta(this.wall?.document)) {
+        event?.stopPropagation?.();
+        return false;
+      }
+    } catch (e) { console.error(`${ID} | porta`, e); }
+    return wrapped(event);
+  };
+  if (globalThis.libWrapper) {
+    libWrapper.register(ID, ALVO, aoClicarPorta, "MIXED");
   } else {
-    console.warn(`${ID} | DoorControl não encontrado: o clique em portas trancadas fica sem a janela.`);
-  }
-});
+    const DC = foundry.canvas?.containers?.DoorControl;
+    const original = DC?.prototype?._onMouseDown;
+    if (typeof original === "function") {
+      DC.prototype._onMouseDown = function (event) {
+        return aoClicarPorta.call(this, ev => original.call(this, ev), event);
+      };
+    } else {
+      console.warn(`${ID} | DoorControl não encontrado: o clique em portas trancadas fica sem a janela.`);
+    }
+  }});
 
 Hooks.once("ready", () => {
   game.socket.on(SOCKET, aoReceber);

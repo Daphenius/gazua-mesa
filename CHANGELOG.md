@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1
+- Corrigido o aviso do libWrapper ("Gazua da Mesa e Arms Reach modificam a mesma funcionalidade"). Com o libWrapper ativo, o clique em portas passa a ser registrado por ele, e os dois módulos convivem. Sem o libWrapper, funciona como antes.
+- libWrapper entrou como módulo recomendado.
+
 ## v1.3.0
 - **Gazua equipada**: para arrombar, a gazua precisa estar equipada na ficha (opção nas configurações, ligada por padrão). Se o personagem tiver uma gazua guardada, a janela avisa para equipar.
 - **Teste pelo Dados em Cena**: com o módulo Dados em Cena ativo, o teste de Ferramentas de Ladrão é pedido na tela animada ou na tela simples (card no chat), conforme a opção do módulo. A tela animada abre só para o jogador e o mestre. Sem o Dados em Cena, o teste é rolado pela ficha, como antes.
