@@ -62,6 +62,10 @@
         "testes": "Só nos testes",
         "minijogos": "Só nos minijogos",
         "nunca": "Nunca quebra"
+      },
+      "limitePilha": {
+        "Nome": "Gazuas por pilha",
+        "Dica": "Máximo de gazuas numa pilha do inventário. Passou disso, o excedente vira uma nova pilha (ex.: 45 gazuas = 20 + 20 + 5). 0 = sem limite."
       }
     },
     "Aviso": {
@@ -80,7 +84,8 @@
       "Erro": "Algo deu errado com a fechadura. Veja o console do mestre (F12).",
       "GazuaQuebrou": "Sua gazua \"{nome}\" quebrou! Restam {restam}.",
       "ErroJogo": "O minijogo não abriu. Veja o console (F12) e me mande o erro.",
-      "GazuaDesgastou": "A gazua \"{nome}\" entortou, mas aguenta mais {n} falha(s)."
+      "GazuaDesgastou": "A gazua \"{nome}\" entortou, mas aguenta mais {n} falha(s).",
+      "PilhaDividida": "\"{nome}\" passou de {limite} por pilha e foi dividida em {n} pilhas."
     },
     "Chat": {
       "Alguem": "Alguém",
@@ -137,7 +142,9 @@
         "Usos": "Falhas até quebrar",
         "UsosDica": "Quantas falhas cada unidade aguenta antes de quebrar (1 = quebra na primeira falha). Ao quebrar, sai uma unidade do inventário. Quando quebra (testes, minijogos ou os dois) é definido nas configurações do módulo.",
         "Salva": "\"{nome}\" agora é uma gazua.",
-        "NaoEquipa": "Este tipo de item não pode ser equipado, e a opção \"A gazua precisa estar equipada\" está ligada: ele nunca vai funcionar como gazua. Use uma Ferramenta ou um Equipamento."
+        "NaoEquipa": "Este tipo de item não pode ser equipado, e a opção \"A gazua precisa estar equipada\" está ligada: ele nunca vai funcionar como gazua. Use uma Ferramenta ou um Equipamento.",
+        "Pilha": "Máximo por pilha",
+        "PilhaDica": "0 = usa o limite das configurações do módulo (agora {n})."
       }
     },
     "Proximas": {

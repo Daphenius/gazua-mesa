@@ -46,6 +46,8 @@ Qualquer item vira chave ou gazua: menu do cabeçalho da ficha (ou clique direit
 - **Chave mestra**: não é gasta e abre fechaduras mesmo sem o segredo, **até um nível** (0 = qualquer) e/ou **por um número de usos** (depois se desgasta e some). Uma fechadura pode recusar chaves mestras.
 - **Gazua**: serve para arrombar e precisa estar **equipada**. Pode ter **bônus** (soma no teste e dá tempo extra no minijogo) e quantas **falhas até quebrar** cada unidade aguenta (1 = quebra na primeira). Nas configurações do módulo você decide se Ferramentas de Ladrão também contam como gazua.
 
+**Pilhas**: cada pilha guarda no máximo 20 gazuas (opção **Gazuas por pilha**). O excedente vira uma nova pilha no inventário (45 = 20 + 20 + 5). Cada gazua pode ter o próprio limite.
+
 **A gazua quebra quando o personagem falha**: sai uma unidade do inventário (quem tem 20 gazuas fica com 19) e o chat avisa. A opção **Quando a gazua quebra** escolhe em quais falhas isso acontece: nos testes e nos minijogos, só nos testes, só nos minijogos ou nunca. Com o teste antes do minijogo ligado, o jogador precisa passar duas vezes (no teste e no minijogo) e pode perder uma gazua em cada falha.
 
 ### Como o jogador abre com a gazua

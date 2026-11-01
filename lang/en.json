@@ -62,6 +62,10 @@
         "testes": "Only on checks",
         "minijogos": "Only on minigames",
         "nunca": "Never breaks"
+      },
+      "limitePilha": {
+        "Nome": "Lockpicks per stack",
+        "Dica": "Maximum lockpicks in one inventory stack. Above that, the extra becomes a new stack (e.g. 45 lockpicks = 20 + 20 + 5). 0 = no limit."
       }
     },
     "Aviso": {
@@ -80,7 +84,8 @@
       "Erro": "Something went wrong with the lock. Check the GM's console (F12).",
       "GazuaQuebrou": "Your lockpick \"{nome}\" broke! {restam} left.",
       "ErroJogo": "The minigame did not open. Check the console (F12) and send me the error.",
-      "GazuaDesgastou": "The lockpick \"{nome}\" bent, but can take {n} more failure(s)."
+      "GazuaDesgastou": "The lockpick \"{nome}\" bent, but can take {n} more failure(s).",
+      "PilhaDividida": "\"{nome}\" went over {limite} per stack and was split into {n} stacks."
     },
     "Chat": {
       "Alguem": "Someone",
@@ -137,7 +142,9 @@
         "Usos": "Failures until it breaks",
         "UsosDica": "How many failures each unit takes before breaking (1 = breaks on the first failure). When it breaks, one unit leaves the inventory. When it breaks (checks, minigames or both) is set in the module settings.",
         "Salva": "\"{nome}\" is now a lockpick.",
-        "NaoEquipa": "This kind of item cannot be equipped, and \"The lockpick must be equipped\" is on: it will never work as a lockpick. Use a Tool or Equipment item."
+        "NaoEquipa": "This kind of item cannot be equipped, and \"The lockpick must be equipped\" is on: it will never work as a lockpick. Use a Tool or Equipment item.",
+        "Pilha": "Maximum per stack",
+        "PilhaDica": "0 = use the limit from the module settings (now {n})."
       }
     },
     "Proximas": {

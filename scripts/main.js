@@ -2,7 +2,7 @@
 
 import {
   ID, SOCKET, TIPOS, t, cfg, lerFechadura, lerChave, estaTrancada, podeTerFechadura, chaveServe,
-  regiaoContem, centroToken
+  regiaoContem, centroToken, lerGazua, limitePilha
 } from "./dados.js";
 import { aoReceber, destrancar, trancar, souMestreAtivo } from "./mestre.js";
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
@@ -20,6 +20,7 @@ Hooks.once("init", () => {
   reg("mostrarCD", { scope: "world", config: true, type: Boolean, default: false });
   reg("ferramentasContam", { scope: "world", config: true, type: Boolean, default: true });
   reg("gazuaEquipada", { scope: "world", config: true, type: Boolean, default: true });
+  reg("limitePilha", { scope: "world", config: true, type: Number, default: 20, range: { min: 0, max: 100, step: 1 } });
   reg("quebraGazua", {
     scope: "world", config: true, type: String, default: "ambos",
     choices: {
@@ -200,6 +201,32 @@ for (const tipo of [...TIPOS, "Item"]) {
   Hooks.on(`update${tipo}`, doc => atualizarJanelas(doc));
 }
 Hooks.on("createItem", doc => atualizarJanelas(doc));
+
+// ---------- Pilhas de gazua ----------
+// Uma pilha passa do limite (ex.: 20)? O excedente vira novas pilhas no mesmo inventário.
+// Roda só no navegador de quem fez a mudança, para não dividir duas vezes.
+async function dividirPilha(item, userId) {
+  if (userId !== game.user.id || item.parent?.documentName !== "Actor" || !lerGazua(item)) return;
+  const limite = limitePilha(item);
+  const qtd = Number(item.system?.quantity) || 0;
+  if (!(limite > 0) || qtd <= limite) return;
+  const base = item.toObject();
+  delete base._id;
+  const novas = [];
+  for (let resto = qtd - limite; resto > 0; resto -= limite) {
+    const pilha = foundry.utils.deepClone(base);
+    foundry.utils.setProperty(pilha, "system.quantity", Math.min(limite, resto));
+    foundry.utils.setProperty(pilha, `flags.${ID}.gazua.usados`, 0);
+    novas.push(pilha);
+  }
+  await item.update({ "system.quantity": limite }, { gazuaPilha: true });
+  await item.parent.createEmbeddedDocuments("Item", novas, { gazuaPilha: true });
+  ui.notifications.info(t("Aviso.PilhaDividida", { nome: item.name, limite, n: novas.length + 1 }));
+}
+Hooks.on("createItem", (item, opcoes, userId) => { if (!opcoes?.gazuaPilha) dividirPilha(item, userId); });
+Hooks.on("updateItem", (item, mudou, opcoes, userId) => {
+  if (!opcoes?.gazuaPilha && foundry.utils.hasProperty(mudou ?? {}, "system.quantity")) dividirPilha(item, userId);
+});
 Hooks.on("deleteItem", doc => atualizarJanelas(doc));
 Hooks.on("controlToken", () => atualizarJanelas(null));
 

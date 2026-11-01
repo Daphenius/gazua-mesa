@@ -48,6 +48,7 @@ export const PADRAO_GAZUA = {
   ativa: true,
   bonus: 0,               // soma no teste e dá +2 s por ponto no minijogo
   usosMax: 1,             // falhas que cada unidade aguenta antes de quebrar
+  pilha: 0,               // máximo por pilha (0 = usa o limite das configurações)
   usados: 0
 };
 
@@ -138,6 +139,12 @@ export function itensGazua(actor) {
     ? itens.filter(i => !lerGazua(i) && i.type === "tool" && (i.system?.type?.baseItem === "thief" || /thie|ladr/i.test(i.name)))
     : [];
   return [...marcadas, ...ferramentas];
+}
+
+/** Máximo de gazuas por pilha para este item (0 = sem limite). */
+export function limitePilha(item) {
+  const proprio = Number(lerGazua(item)?.pilha) || 0;
+  return proprio > 0 ? proprio : Math.max(0, Number(cfg("limitePilha")) || 0);
 }
 
 export const estaEquipada = item => item?.system?.equipped === true;

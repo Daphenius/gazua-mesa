@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.0
+- **Pilhas de gazua**: cada pilha do inventário guarda no máximo 20 gazuas (opção **Gazuas por pilha**; 0 = sem limite). Passou disso, o excedente vira uma nova pilha (45 gazuas = 20 + 20 + 5), tanto ao receber o item quanto ao aumentar a quantidade. Cada gazua pode ter o próprio limite ("Máximo por pilha" na configuração do item).
+
 ## v1.3.1
 - Corrigido o aviso do libWrapper ("Gazua da Mesa e Arms Reach modificam a mesma funcionalidade"). Com o libWrapper ativo, o clique em portas passa a ser registrado por ele, e os dois módulos convivem. Sem o libWrapper, funciona como antes.
 - libWrapper entrou como módulo recomendado.

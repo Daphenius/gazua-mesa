@@ -388,6 +388,7 @@ export async function configurarChave(item) {
       ${secao("fa-screwdriver", t("Gazua.Item.Titulo"), `
         ${cfgEquip && !equipavel ? `<p class="lp-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${t("Gazua.Item.NaoEquipa")}</p>` : ""}
         ${linha(t("Gazua.Item.Bonus"), `<input type="number" name="bonus" min="0" max="10" value="${gazua.bonus}">`, t("Gazua.Item.BonusDica"))}
+        ${linha(t("Gazua.Item.Pilha"), `<input type="number" name="pilha" min="0" max="100" value="${gazua.pilha ?? 0}">`, t("Gazua.Item.PilhaDica", { n: game.settings.get(ID, "limitePilha") }))}
         ${linha(t("Gazua.Item.Usos"), `<input type="number" name="usosGazua" min="1" value="${Math.max(1, gazua.usosMax)}">
           <label class="lp-inline"><input type="checkbox" name="zerarGazua"> ${t("Chave.Zerar", { n: gazua.usados })}</label>`, t("Gazua.Item.UsosDica"))}`, "lp-so-gazua")}
     </div>`;
@@ -429,7 +430,7 @@ export async function configurarChave(item) {
   if (r.tipoItem === "gazua") {
     const nova = {
       ...gazua, ativa: true,
-      bonus: Math.max(0, Number(r.bonus) || 0), usosMax: Math.max(1, Number(r.usosGazua) || 1)
+      bonus: Math.max(0, Number(r.bonus) || 0), usosMax: Math.max(1, Number(r.usosGazua) || 1), pilha: Math.max(0, Number(r.pilha) || 0)
     };
     if (r.zerarGazua) nova.usados = 0;
     if (c) await item.unsetFlag(ID, "chave");
