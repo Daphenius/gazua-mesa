@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.5.0
+- **Aviso do libWrapper resolvido de vez**: a Gazua não mexe mais em nenhuma função do Foundry, nem pelo libWrapper. Ela só "ouve" o clique no ícone da porta, então nunca mais entra no aviso de conflito com o Arm's Reach ou o Objetos Vivos. O libWrapper deixou de ser recomendado.
+- **Quantidade de gazuas**: a configuração da gazua ganhou o campo **Quantidade** (ex.: 20). O item fica empilhado na ficha, como qualquer item com quantidade, e cada gazua que quebra tira uma. A **Nova gazua** do painel já vem com 20.
+- Saiu a divisão automática em pilhas da v1.4.0 (e a opção "Gazuas por pilha"): a quantidade fica num item só, como na ficha nativa.
+
 ## v1.4.1
 - Corrigido de vez o aviso do libWrapper sobre conflito com o Arm's Reach e o Objetos Vivos. A Gazua agora só "escuta" o clique na porta (tipo ouvinte do libWrapper) e não impede mais o Foundry nem outros módulos de reagirem ao clique. A janela da fechadura continua abrindo igual, e o Foundry toca o som de porta trancada.
 

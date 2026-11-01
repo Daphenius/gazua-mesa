@@ -2,7 +2,7 @@
 
 import {
   ID, SOCKET, TIPOS, t, cfg, lerFechadura, lerChave, estaTrancada, podeTerFechadura, chaveServe,
-  regiaoContem, centroToken, lerGazua, limitePilha
+  regiaoContem, centroToken
 } from "./dados.js";
 import { aoReceber, destrancar, trancar, souMestreAtivo } from "./mestre.js";
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
@@ -20,7 +20,6 @@ Hooks.once("init", () => {
   reg("mostrarCD", { scope: "world", config: true, type: Boolean, default: false });
   reg("ferramentasContam", { scope: "world", config: true, type: Boolean, default: true });
   reg("gazuaEquipada", { scope: "world", config: true, type: Boolean, default: true });
-  reg("limitePilha", { scope: "world", config: true, type: Number, default: 20, range: { min: 0, max: 100, step: 1 } });
   reg("quebraGazua", {
     scope: "world", config: true, type: String, default: "ambos",
     choices: {
@@ -46,26 +45,6 @@ Hooks.once("init", () => {
   reg("cliquePorta", { scope: "world", config: true, type: Boolean, default: true });
   reg("entrarRegiao", { scope: "world", config: true, type: Boolean, default: true });
   reg("botaoHUD", { scope: "world", config: true, type: Boolean, default: true });
-
-  // Clique do jogador numa porta trancada abre a janela da fechadura.
-  // Só "escuta" o clique: não bloqueia o Foundry nem outros módulos (Arm's Reach, Objetos Vivos).
-  // Com o libWrapper, usa o tipo LISTENER, que nunca gera aviso de conflito.
-  const ALVO = "foundry.canvas.containers.DoorControl.prototype._onMouseDown";
-  const ouvirClique = function () {
-    try { interceptarPorta(this.wall?.document); } catch (e) { console.error(`${ID} | porta`, e); }
-  };
-  if (globalThis.libWrapper) {
-    if ("LISTENER" in libWrapper) libWrapper.register(ID, ALVO, function (...args) { ouvirClique.call(this); }, libWrapper.LISTENER);
-    else libWrapper.register(ID, ALVO, function (wrapped, ...args) { ouvirClique.call(this); return wrapped(...args); }, "WRAPPER");
-  } else {
-    const DC = foundry.canvas?.containers?.DoorControl;
-    const original = DC?.prototype?._onMouseDown;
-    if (typeof original === "function") {
-      DC.prototype._onMouseDown = function (...args) { ouvirClique.call(this); return original.apply(this, args); };
-    } else {
-      console.warn(`${ID} | DoorControl não encontrado: o clique em portas trancadas fica sem a janela.`);
-    }
-  }
 });
 
 Hooks.once("ready", () => {
@@ -84,6 +63,24 @@ Hooks.once("ready", () => {
     lerFechadura, lerChave, estaTrancada, chaveServe
   };
 });
+
+// ---------- Clique na porta ----------
+// A Gazua não mexe em nenhuma função do Foundry (nem pelo libWrapper): ela só coloca um
+// "ouvido" a mais no próprio ícone de cada porta. Assim nunca entra no aviso de conflito do
+// libWrapper e não interfere no Arm's Reach, no Objetos Vivos ou em qualquer outro módulo.
+const portasOuvidas = new WeakSet();
+function ouvirPorta(wall) {
+  const icone = wall?.doorControl;
+  if (!icone || portasOuvidas.has(icone) || typeof icone.on !== "function") return;
+  portasOuvidas.add(icone);
+  icone.on("pointerdown", evento => {
+    if ((evento?.button ?? 0) !== 0) return;
+    try { interceptarPorta(wall.document); } catch (e) { console.error(`${ID} | porta`, e); }
+  });
+}
+Hooks.on("drawWall", ouvirPorta);
+Hooks.on("refreshWall", ouvirPorta);
+Hooks.on("canvasReady", () => { for (const w of canvas.walls?.placeables ?? []) ouvirPorta(w); });
 
 function interceptarPorta(wallDoc) {
   if (!wallDoc || game.user.isGM || !cfg("cliquePorta")) return false;
@@ -196,31 +193,6 @@ for (const tipo of [...TIPOS, "Item"]) {
 }
 Hooks.on("createItem", doc => atualizarJanelas(doc));
 
-// ---------- Pilhas de gazua ----------
-// Uma pilha passa do limite (ex.: 20)? O excedente vira novas pilhas no mesmo inventário.
-// Roda só no navegador de quem fez a mudança, para não dividir duas vezes.
-async function dividirPilha(item, userId) {
-  if (userId !== game.user.id || item.parent?.documentName !== "Actor" || !lerGazua(item)) return;
-  const limite = limitePilha(item);
-  const qtd = Number(item.system?.quantity) || 0;
-  if (!(limite > 0) || qtd <= limite) return;
-  const base = item.toObject();
-  delete base._id;
-  const novas = [];
-  for (let resto = qtd - limite; resto > 0; resto -= limite) {
-    const pilha = foundry.utils.deepClone(base);
-    foundry.utils.setProperty(pilha, "system.quantity", Math.min(limite, resto));
-    foundry.utils.setProperty(pilha, `flags.${ID}.gazua.usados`, 0);
-    novas.push(pilha);
-  }
-  await item.update({ "system.quantity": limite }, { gazuaPilha: true });
-  await item.parent.createEmbeddedDocuments("Item", novas, { gazuaPilha: true });
-  ui.notifications.info(t("Aviso.PilhaDividida", { nome: item.name, limite, n: novas.length + 1 }));
-}
-Hooks.on("createItem", (item, opcoes, userId) => { if (!opcoes?.gazuaPilha) dividirPilha(item, userId); });
-Hooks.on("updateItem", (item, mudou, opcoes, userId) => {
-  if (!opcoes?.gazuaPilha && foundry.utils.hasProperty(mudou ?? {}, "system.quantity")) dividirPilha(item, userId);
-});
 Hooks.on("deleteItem", doc => atualizarJanelas(doc));
 Hooks.on("controlToken", () => atualizarJanelas(null));
 
@@ -230,4 +202,5 @@ Hooks.on("updateWall", (doc, mudou) => {
   const f = lerFechadura(doc);
   if (f && f.trancada !== estaTrancada(doc, f)) doc.setFlag(ID, "fechadura.trancada", estaTrancada(doc, f));
 });
+
 
