@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.4.1
+- Corrigido de vez o aviso do libWrapper sobre conflito com o Arm's Reach e o Objetos Vivos. A Gazua agora só "escuta" o clique na porta (tipo ouvinte do libWrapper) e não impede mais o Foundry nem outros módulos de reagirem ao clique. A janela da fechadura continua abrindo igual, e o Foundry toca o som de porta trancada.
+
 ## v1.4.0
 - **Pilhas de gazua**: cada pilha do inventário guarda no máximo 20 gazuas (opção **Gazuas por pilha**; 0 = sem limite). Passou disso, o excedente vira uma nova pilha (45 gazuas = 20 + 20 + 5), tanto ao receber o item quanto ao aumentar a quantidade. Cada gazua pode ter o próprio limite ("Máximo por pilha" na configuração do item).
 

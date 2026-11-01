@@ -48,31 +48,25 @@ Hooks.once("init", () => {
   reg("botaoHUD", { scope: "world", config: true, type: Boolean, default: true });
 
   // Clique do jogador numa porta trancada abre a janela da fechadura.
-  // Com o libWrapper ativo, registra por ele (convive com Arm's Reach e outros);
-  // sem ele, envolve o método direto.
+  // Só "escuta" o clique: não bloqueia o Foundry nem outros módulos (Arm's Reach, Objetos Vivos).
+  // Com o libWrapper, usa o tipo LISTENER, que nunca gera aviso de conflito.
   const ALVO = "foundry.canvas.containers.DoorControl.prototype._onMouseDown";
-  const aoClicarPorta = function (wrapped, event) {
-    try {
-      if (interceptarPorta(this.wall?.document)) {
-        event?.stopPropagation?.();
-        return false;
-      }
-    } catch (e) { console.error(`${ID} | porta`, e); }
-    return wrapped(event);
+  const ouvirClique = function () {
+    try { interceptarPorta(this.wall?.document); } catch (e) { console.error(`${ID} | porta`, e); }
   };
   if (globalThis.libWrapper) {
-    libWrapper.register(ID, ALVO, aoClicarPorta, "MIXED");
+    if ("LISTENER" in libWrapper) libWrapper.register(ID, ALVO, function (...args) { ouvirClique.call(this); }, libWrapper.LISTENER);
+    else libWrapper.register(ID, ALVO, function (wrapped, ...args) { ouvirClique.call(this); return wrapped(...args); }, "WRAPPER");
   } else {
     const DC = foundry.canvas?.containers?.DoorControl;
     const original = DC?.prototype?._onMouseDown;
     if (typeof original === "function") {
-      DC.prototype._onMouseDown = function (event) {
-        return aoClicarPorta.call(this, ev => original.call(this, ev), event);
-      };
+      DC.prototype._onMouseDown = function (...args) { ouvirClique.call(this); return original.apply(this, args); };
     } else {
       console.warn(`${ID} | DoorControl não encontrado: o clique em portas trancadas fica sem a janela.`);
     }
-  }});
+  }
+});
 
 Hooks.once("ready", () => {
   game.socket.on(SOCKET, aoReceber);
