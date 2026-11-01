@@ -88,5 +88,9 @@ Em **Configurações do módulo → Configurar minijogos** (ou no painel do mest
 ### API para macros
 `game.modules.get("gazua-mesa").api` traz `abrir`, `proximas`, `configurar`, `configurarChave`, `remover`, `painel`, `destrancar`, `trancar`. Os hooks `gazua-mesa.destrancou` e `gazua-mesa.trancou` disparam no mestre.
 
+## Limitações
+- Quando a opção "Ferramentas de Ladrão contam como gazua" está ligada, o módulo reconhece o item pelo tipo base (ferramentas de ladrão do D&D 5e) ou pelo **nome** (que contenha "ladr" ou "thie"). Um item com outro nome só serve se o mestre marcá-lo como gazua.
+- O mestre confere quem está pedindo, o alcance, as tentativas e o resultado do teste de Ferramentas de Ladrão (pela rolagem no chat ou pelo Dados em Cena). O resultado do **minijogo**, porém, ainda vem do computador do jogador; isso será resolvido numa versão futura.
+
 ## Licença
 MIT.

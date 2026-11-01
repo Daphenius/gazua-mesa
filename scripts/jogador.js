@@ -173,11 +173,15 @@ export class JanelaFechadura extends ApplicationV2 {
     pedir({ tipo: "chave", uuid: this.doc.uuid, actorUuid: this.actor.uuid, itemUuid: item.uuid });
   }
 
-  /** Teste de Ferramentas de Ladrão (pelo Dados em Cena, se ligado). Devolve o total com o bônus da gazua, ou null. */
-  async #fazerTeste(f, bonus) {
+  /**
+   * Teste de Ferramentas de Ladrão (pelo Dados em Cena, se ligado).
+   * Devolve { total, mensagemId, peloMestre } ou null. Com o Dados em Cena, o mestre já decide o resultado
+   * (peloMestre); sem ele, a rolagem vai para o chat e o mestre lê o total de lá pela mensagemId.
+   */
+  async #fazerTeste(f, bonus, finalidade) {
     const nome = nomeFechadura(this.doc, f);
     const modo = cfg("testeDadosEmCena");
-    let total;
+    let total, mensagemId = null, peloMestre = false;
     if (modo !== "desligado" && apiDados()) {
       if (!game.users.activeGM) { ui.notifications.warn(t("Aviso.SemMestre")); return null; }
       const pedidoId = foundry.utils.randomID();
@@ -185,20 +189,22 @@ export class JanelaFechadura extends ApplicationV2 {
       const tdoc = this.token?.document ?? this.token;
       pedir({
         tipo: "testeDC", pedidoId, uuid: this.doc.uuid, actorUuid: this.actor.uuid,
-        tokenId: tdoc?.id, sceneId: tdoc?.parent?.id, bonus, modo
+        tokenId: tdoc?.id, sceneId: tdoc?.parent?.id, modo, finalidade
       });
       ui.notifications.info(t("Janela.AguardandoTeste"));
       total = await espera;
       if (total == null) { ui.notifications.warn(t("Janela.TesteSemResposta")); return null; }
+      peloMestre = true;
     } else {
       const rolado = await rolarTeste(this.actor, f, nome);
       if (rolado == null) return null;
-      total = rolado + bonus;
+      total = rolado.total + bonus;
+      mensagemId = rolado.mensagemId;
     }
     const passou = total >= Number(f.cd);
     const cd = cfg("mostrarCD") ? ` (${t("Janela.CD")} ${f.cd})` : "";
     ui.notifications[passou ? "info" : "warn"](t(passou ? "Janela.TestePassou" : "Janela.TesteFalhou", { total, cd }));
-    return total;
+    return { total, mensagemId, peloMestre };
   }
 
   static async #teste() {
@@ -209,9 +215,9 @@ export class JanelaFechadura extends ApplicationV2 {
     this.ocupado = true;
     this.render();
     try {
-      const total = await this.#fazerTeste(f, bonus);
-      if (total == null) return;
-      pedir({ tipo: "arrombar", via: "teste", uuid: this.doc.uuid, actorUuid: this.actor.uuid, gazuaUuid: gazua?.uuid, sucesso: total >= Number(f.cd), total });
+      const r = await this.#fazerTeste(f, bonus, "teste");
+      if (!r || r.peloMestre) return;   // pelo Dados em Cena o mestre já decidiu
+      pedir({ tipo: "arrombar", via: "teste", uuid: this.doc.uuid, actorUuid: this.actor.uuid, mensagemId: r.mensagemId });
     } finally {
       this.ocupado = false;
       if (this.rendered) this.render();
@@ -224,22 +230,27 @@ export class JanelaFechadura extends ApplicationV2 {
     const gazua = gazuaDoAtor(this.actor);
     const bonusGazua = lerGazua(gazua)?.bonus ?? 0;
     const nome = nomeFechadura(this.doc, f);
-    const base = { uuid: this.doc.uuid, actorUuid: this.actor.uuid, gazuaUuid: gazua?.uuid };
+    const base = { uuid: this.doc.uuid, actorUuid: this.actor.uuid };
     this.ocupado = true;
     this.render();
     try {
       // Primeiro a CD: só quem passa consegue trabalhar a fechadura com a gazua
-      let margem = 0;
+      let margem = 0, mensagemId = null;
       if (f.testeAntes) {
-        const total = await this.#fazerTeste(f, bonusGazua);
-        if (total == null) return;
-        if (total < Number(f.cd)) return pedir({ ...base, tipo: "arrombar", via: "teste", sucesso: false, total });
-        margem = total - Number(f.cd);
+        const r = await this.#fazerTeste(f, bonusGazua, "minigame");
+        if (!r) return;
+        if (r.total < Number(f.cd)) {
+          // pelo Dados em Cena o mestre já registrou a falha
+          if (!r.peloMestre) pedir({ ...base, tipo: "arrombar", via: "teste", mensagemId: r.mensagemId });
+          return;
+        }
+        margem = r.total - Number(f.cd);
+        mensagemId = r.mensagemId;
       }
       const tipo = escolherJogo(f);
       const sucesso = await jogar(tipo, { parametros: parametros(f, this.actor, { margem, bonusGazua }, tipo), nome });
       if (sucesso === null) return;   // o minijogo nem abriu (erro já avisado)
-      if (estaTrancada(this.doc)) pedir({ ...base, tipo: "arrombar", via: "minigame", sucesso });
+      if (estaTrancada(this.doc)) pedir({ ...base, tipo: "arrombar", via: "minigame", sucesso, mensagemId });
     } catch (e) {
       console.error(`${ID} | minijogo`, e);
       ui.notifications.error(t("Aviso.ErroJogo"));
@@ -250,13 +261,20 @@ export class JanelaFechadura extends ApplicationV2 {
   }
 }
 
-/** Teste de ferramentas de ladrão. Usa a rolagem do D&D 5e quando dá; senão, d20 + Destreza. */
+/**
+ * Teste de ferramentas de ladrão. Usa a rolagem do D&D 5e quando dá; senão, d20 + Destreza.
+ * Devolve { total, mensagemId } (a mensagem do chat é o que o mestre confere) ou null se o jogador cancelou.
+ */
 export async function rolarTeste(actor, f, nome) {
   if (typeof actor.rollToolCheck === "function" && (actor.system?.tools?.thief || CONFIG.DND5E?.tools?.thief)) {
     try {
       const r = await actor.rollToolCheck({ tool: "thief", target: Number(f.cd) });
       const roll = Array.isArray(r) ? r[0] : r;
-      return roll ? Number(roll.total) : null;   // null: o jogador cancelou
+      if (!roll) return null;   // o jogador cancelou
+      const total = Number(roll.total);
+      // a mensagem que o sistema acabou de criar com esta rolagem
+      const msg = game.messages.contents.findLast(m => m.author?.id === game.user.id && m.rolls?.some(x => x.total === total));
+      return { total, mensagemId: msg?.id ?? null };
     } catch (e) {
       console.warn(`${ID} | rollToolCheck falhou, usando rolagem simples`, e);
     }
@@ -264,8 +282,8 @@ export async function rolarTeste(actor, f, nome) {
   // sem a rolagem do sistema: d20 + Destreza
   const mod = Number(actor.system?.abilities?.dex?.mod) || 0;
   const roll = await new Roll("1d20 + @mod", { mod }).evaluate();
-  await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: t("Janela.FlavorTeste", { nome: esc(nome) }) });
-  return roll.total;
+  const msg = await roll.toMessage({ speaker: ChatMessage.getSpeaker({ actor }), flavor: t("Janela.FlavorTeste", { nome: esc(nome) }) });
+  return { total: roll.total, mensagemId: msg?.id ?? null };
 }
 
 // ---------- Fechaduras por perto ----------

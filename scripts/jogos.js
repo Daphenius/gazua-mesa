@@ -750,13 +750,8 @@ export class Cristais extends MiniJogo {
     this.g = Math.min(Number(this.aj.maxGrade) || 5, d <= 3 ? 3 : d <= 7 ? 4 : 5);
     this.luz = Array(this.g * this.g).fill(true);
     // parte do resolvido e toca alguns cristais: sempre tem solução
-    this.solucao = new Set();
     do {
-      for (let k = 0; k < 3 + d; k++) {
-        const i = Math.floor(Math.random() * this.luz.length);
-        this.#inverter(i);
-        if (this.solucao.has(i)) this.solucao.delete(i); else this.solucao.add(i);
-      }
+      for (let k = 0; k < 3 + d; k++) this.#inverter(Math.floor(Math.random() * this.luz.length));
     } while (this.luz.every(Boolean));
     this.toques = 0;
   }

@@ -2,7 +2,7 @@
 
 import {
   ID, SOCKET, TIPOS, t, cfg, lerFechadura, lerChave, estaTrancada, podeTerFechadura, chaveServe,
-  regiaoContem, centroToken, lerGazua
+  regiaoContem, lerGazua
 } from "./dados.js";
 import { aoReceber, destrancar, trancar, souMestreAtivo } from "./mestre.js";
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
@@ -48,7 +48,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-  game.socket.on(SOCKET, aoReceber);
+  game.socket.on(SOCKET, (msg, senderId) => aoReceber(msg, senderId));
   const mod = game.modules.get(ID);
   mod.api = {
     abrir: abrirFechadura,
@@ -166,10 +166,16 @@ Hooks.on("moveToken", (tokenDoc, movimento, operacao, usuario) => {
   if (!cfg("entrarRegiao") || game.user.isGM || usuario?.id !== game.user.id) return;
   const token = tokenDoc.object;
   if (!token?.actor || !token.isOwner) return;
-  const p = centroToken(token);
+  // usa o destino do movimento (não a posição animada do token na tela)
+  const destino = movimento?.destination ?? tokenDoc;
+  const gs = tokenDoc.parent?.grid?.size ?? canvas?.grid?.size ?? 100;
+  const p = typeof tokenDoc.getCenterPoint === "function"
+    ? tokenDoc.getCenterPoint({ x: destino.x, y: destino.y })
+    : { x: destino.x + tokenDoc.width * gs / 2, y: destino.y + tokenDoc.height * gs / 2 };
+  const elevacao = destino.elevation ?? tokenDoc.elevation;
   for (const regiao of tokenDoc.parent?.regions ?? []) {
     const f = lerFechadura(regiao);
-    if (f && estaTrancada(regiao, f) && regiaoContem(regiao, p, tokenDoc.elevation)) {
+    if (f && estaTrancada(regiao, f) && regiaoContem(regiao, p, elevacao)) {
       abrirFechadura(regiao, token);
       break;
     }
@@ -191,11 +197,10 @@ Hooks.on("activateNote", note => {
 for (const tipo of [...TIPOS, "Item"]) {
   Hooks.on(`update${tipo}`, doc => atualizarJanelas(doc));
 }
-Hooks.on("createItem", doc => atualizarJanelas(doc));
-
-// Gazua ou chave dada a um token NÃO vinculado de um personagem de jogador: ela fica só naquele
-// token e some da ficha do personagem (ao entrar de novo, ao recriar o token). Avisa o mestre.
+// Item novo: atualiza as janelas e, se for gazua ou chave dada a um token NÃO vinculado de um
+// personagem de jogador (ela fica só naquele token e some da ficha ao entrar de novo), avisa o mestre.
 Hooks.on("createItem", item => {
+  atualizarJanelas(item);
   const ator = item.parent;
   if (!souMestreAtivo() || !ator?.isToken || !ator.hasPlayerOwner) return;
   if (!lerGazua(item) && !lerChave(item)) return;
@@ -209,7 +214,7 @@ Hooks.on("controlToken", () => atualizarJanelas(null));
 Hooks.on("updateWall", (doc, mudou) => {
   if (!("ds" in (mudou ?? {})) || !souMestreAtivo()) return;
   const f = lerFechadura(doc);
-  if (f && f.trancada !== estaTrancada(doc, f)) doc.setFlag(ID, "fechadura.trancada", estaTrancada(doc, f));
+  if (f && f.trancada !== estaTrancada(doc, f)) doc.setFlag(ID, "fechadura.trancada", estaTrancada(doc, f)).catch(console.error);
 });
 
 

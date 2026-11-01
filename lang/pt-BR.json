@@ -81,6 +81,8 @@
       "GazuaQuebrou": "Sua gazua \"{nome}\" quebrou! Restam {restam}.",
       "ErroJogo": "O minijogo não abriu. Veja o console (F12) e me mande o erro.",
       "GazuaDesgastou": "A gazua \"{nome}\" entortou, mas aguenta mais {n} falha(s).",
+      "NaoSeuPersonagem": "Esse personagem não é seu.",
+      "SemRolagem": "O mestre não encontrou a sua rolagem de Ferramentas de Ladrão. Tente de novo.",
       "TokenNaoVinculado": "\"{item}\" foi dado ao token de {ator}, que não está vinculado à ficha. Itens assim ficam só neste token e somem da ficha do personagem (por exemplo, quando o jogador entra de novo). Ligue \"Vincular dados do ator\" no token do personagem."
     },
     "Chat": {

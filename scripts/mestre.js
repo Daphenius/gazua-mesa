@@ -1,7 +1,10 @@
 // Gazua da Mesa — o que só o mestre pode fazer: trancar, destrancar, gastar chaves.
 // Os jogadores mandam pedidos por socket; o mestre ativo confere e executa.
 
-import { ID, SOCKET, t, esc, cfg, lerFechadura, lerChave, lerGazua, usosItem, estaTrancada, chaveServe, nomeFechadura, apiDados } from "./dados.js";
+import {
+  ID, SOCKET, REMOTOS, t, esc, cfg, lerFechadura, lerChave, lerGazua, usosItem, estaTrancada, chaveServe, nomeFechadura, apiDados,
+  aoAlcance, gazuaDoAtor
+} from "./dados.js";
 
 const ESTADO = () => CONST.WALL_DOOR_STATES;
 const NIVEL = () => CONST.DOCUMENT_OWNERSHIP_LEVELS;
@@ -51,10 +54,18 @@ function responderTeste(userId, pedidoId, total) {
   game.socket.emit(SOCKET, { tipo: "resultadoTeste", para: userId, pedidoId, total });
 }
 
-export function aoReceber(msg) {
-  if (!msg || typeof msg !== "object") return;
-  if (msg.tipo === "pedido" && souMestreAtivo()) return processar(msg.pedido, msg.userId);
-  if (msg.tipo === "aviso" && msg.para === game.user.id) return ui.notifications[msg.nivel ?? "info"](t(msg.chave, msg.dados));
+const NIVEIS_AVISO = ["info", "warn", "error"];
+
+// senderId é quem realmente mandou a mensagem (vem do próprio socket, não do conteúdo)
+export function aoReceber(msg, senderId) {
+  if (!msg || typeof msg !== "object" || !senderId) return;
+  if (msg.tipo === "pedido" && souMestreAtivo()) return processar(msg.pedido, senderId);
+  // as mensagens abaixo só o mestre manda
+  if (!game.users.get(senderId)?.isGM) return;
+  if (msg.tipo === "aviso" && msg.para === game.user.id) {
+    const nivel = NIVEIS_AVISO.includes(msg.nivel) ? msg.nivel : "info";
+    return ui.notifications[nivel](t(msg.chave, msg.dados));
+  }
   if (msg.tipo === "mostrar" && msg.para?.includes(game.user.id)) return mostrarDocumento(msg.uuid);
   if (msg.tipo === "resultadoTeste" && msg.para === game.user.id) return testesPendentes.get(msg.pedidoId)?.(msg.total);
 }
@@ -252,38 +263,95 @@ async function desgastarGazua(uuid, actor, userId, via) {
   }
   avisar(userId, "Aviso.GazuaQuebrou", { nome, restam }, "warn");
   await anunciar(`<i class="fa-solid fa-screwdriver"></i> ${t("Chat.GazuaQuebrou", { ator: esc(actor?.name ?? t("Chat.Alguem")), nome: esc(nome), restam })}`, actor);
-  if (restam <= 0) console.info(`${ID} | "${nome}" de ${actor?.name} acabou e foi removida do inventário (todas as gazuas quebraram).`);
 }
 
 // ---------- Pedidos ----------
 
+// Rolagens de chat já aproveitadas (cada rolagem só vale para uma tentativa)
+const rolagensUsadas = new Set();
+// Quem passou no teste antes do minijogo (pelo Dados em Cena): "userId:uuid" -> quando
+const liberados = new Map();
+const VALIDADE = 10 * 60000;
+
+/** Lê o total da rolagem de Ferramentas de Ladrão feita pelo próprio remetente; null se não vale. */
+function lerRolagem(mensagemId, user) {
+  if (!mensagemId || rolagensUsadas.has(mensagemId)) return null;
+  const m = game.messages.get(mensagemId);
+  if (!m || m.author?.id !== user.id) return null;
+  if (Date.now() - (m.timestamp ?? 0) > VALIDADE) return null;
+  const total = Number(m.rolls?.[0]?.total);
+  if (!Number.isFinite(total)) return null;
+  rolagensUsadas.add(mensagemId);
+  return total;
+}
+
+/** O ator do pedido pertence ao remetente e está ao alcance da fechadura? Devolve a chave do aviso ou null. */
+function conferirPedido(doc, f, actor, user) {
+  if (!actor || actor.documentName !== "Actor") return "Aviso.SemToken";
+  if (!user.isGM && !actor.testUserPermission(user, "OWNER")) return "Aviso.NaoSeuPersonagem";
+  if (user.isGM || REMOTOS.includes(doc.documentName)) return null;
+  const tokens = (doc.parent?.tokens?.contents ?? []).filter(td => td.actor === actor);
+  if (!tokens.some(td => aoAlcance(td, doc, f))) return "Aviso.Longe";
+  return null;
+}
+
+/** Registra a falha: conta a tentativa, avisa no chat e desgasta a gazua. */
+async function falhar(doc, f, actor, userId, gazuaUuid, via) {
+  const falhas = Number(f.falhas?.[actor.id] ?? 0);
+  await doc.update({ [`flags.${ID}.fechadura.falhas.${actor.id}`]: falhas + 1 });
+  await anunciar(`<i class="fa-solid fa-lock"></i> ${t("Chat.Falhou", { ator: esc(actor.name), nome: esc(nomeFechadura(doc, f)) })}`, actor);
+  await desgastarGazua(gazuaUuid, actor, userId, via);
+}
+
 export async function processar(pedido, userId) {
+  if (!pedido || typeof pedido !== "object") return;
   try {
-    const doc = await fromUuid(pedido.uuid);
+    const user = game.users.get(userId);
+    const doc = await fromUuid(String(pedido.uuid ?? ""));
     const f = lerFechadura(doc);
-    const actor = pedido.actorUuid ? await fromUuid(pedido.actorUuid) : null;
+    const actor = pedido.actorUuid ? await fromUuid(String(pedido.actorUuid)) : null;
     const desistir = () => { if (pedido.tipo === "testeDC") responderTeste(userId, pedido.pedidoId, null); };
+    if (!user) return;
     if (!doc || !f) { desistir(); return avisar(userId, "Aviso.SemFechadura", {}, "warn"); }
     if (!estaTrancada(doc, f)) { desistir(); return avisar(userId, "Aviso.JaAberta"); }
+    const problema = conferirPedido(doc, f, actor, user);
+    if (problema) { desistir(); return avisar(userId, problema, {}, "warn"); }
 
-    const nome = esc(nomeFechadura(doc, f));
+    // Arrombar (teste ou minijogo): o mestre confere o modo, as tentativas e a gazua
+    const prepararArrombar = () => {
+      if (f.modo === "chave") return { erro: "Aviso.SoChave" };
+      const falhas = Number(f.falhas?.[actor.id] ?? 0);
+      if (f.tentativas > 0 && falhas >= f.tentativas) return { erro: "Aviso.SemTentativas" };
+      const gazua = gazuaDoAtor(actor);
+      if (f.exigeFerramentas && !gazua) return { erro: "Janela.SemFerramentas" };
+      return { gazua, bonus: lerGazua(gazua)?.bonus ?? 0 };
+    };
 
     if (pedido.tipo === "testeDC") {
+      const prep = prepararArrombar();
+      if (prep.erro) { desistir(); return avisar(userId, prep.erro, {}, "warn"); }
       const api = apiDados();
       let r = null;
       try {
         r = api && await api.pedirTeste({
-          tokenId: pedido.tokenId, actorId: actor?.id, sceneId: pedido.sceneId,
+          tokenId: pedido.tokenId, actorId: actor.id, sceneId: pedido.sceneId,
           config: { kind: "tool", toolKey: "thief", label: t("Teste.Ferramenta") },
           cd: Number(f.cd), modo: pedido.modo === "simples" ? "chat" : "tela",
-          para: [userId], bonus: Number(pedido.bonus) || 0, tempoLimite: 120000
+          para: [userId], bonus: prep.bonus, tempoLimite: 120000
         });
       } catch (e) { console.error(`${ID} | Dados em Cena`, e); }
-      return responderTeste(userId, pedido.pedidoId, r?.total ?? null);
+      const total = Number.isFinite(Number(r?.total)) ? Number(r.total) : null;
+      responderTeste(userId, pedido.pedidoId, total);
+      if (total == null) return;
+      // o mestre já tem o resultado: decide aqui mesmo
+      const passou = total >= Number(f.cd);
+      if (!passou) return falhar(doc, f, actor, userId, prep.gazua?.uuid, "teste");
+      if (pedido.finalidade === "minigame") { liberados.set(`${userId}:${doc.uuid}`, Date.now()); return; }
+      return destrancar(doc, { actor, userId, como: t("Chat.ComTeste") });
     }
 
     if (pedido.tipo === "chave") {
-      const item = await fromUuid(pedido.itemUuid);
+      const item = await fromUuid(String(pedido.itemUuid ?? ""));
       const chave = lerChave(item);
       if (!item || !chave || item.parent?.uuid !== actor?.uuid) return avisar(userId, "Aviso.ChaveSumiu", {}, "warn");
       const r = chaveServe(chave, f);
@@ -304,15 +372,32 @@ export async function processar(pedido, userId) {
     }
 
     if (pedido.tipo === "arrombar") {
-      if (f.modo === "chave") return avisar(userId, "Aviso.SoChave", {}, "warn");
-      const falhas = Number(f.falhas?.[actor?.id] ?? 0);
-      if (f.tentativas > 0 && falhas >= f.tentativas) return avisar(userId, "Aviso.SemTentativas", {}, "warn");
-      const como = t(pedido.via === "minigame" ? "Chat.ComGazua" : "Chat.ComTeste");
-      if (pedido.sucesso) return destrancar(doc, { actor, userId, como });
-      if (actor) await doc.update({ [`flags.${ID}.fechadura.falhas.${actor.id}`]: falhas + 1 });
-      await anunciar(`<i class="fa-solid fa-lock"></i> ${t("Chat.Falhou", { ator: esc(actor?.name ?? t("Chat.Alguem")), nome })}`, actor);
-      await desgastarGazua(pedido.gazuaUuid, actor, userId, pedido.via);
-      return;
+      const prep = prepararArrombar();
+      if (prep.erro) return avisar(userId, prep.erro, {}, "warn");
+      const via = pedido.via === "minigame" ? "minigame" : "teste";
+      let sucesso;
+      if (via === "teste") {
+        // o veredito sai da rolagem no chat, lida aqui no mestre
+        const total = lerRolagem(pedido.mensagemId, user);
+        if (total == null) return avisar(userId, "Aviso.SemRolagem", {}, "warn");
+        sucesso = total + prep.bonus >= Number(f.cd);
+      } else {
+        // minijogo: o resultado ainda vem do cliente; o mestre confere ao menos o teste antes
+        if (f.testeAntes && !user.isGM) {
+          const chave = `${userId}:${doc.uuid}`;
+          let passou = Date.now() - (liberados.get(chave) ?? -Infinity) <= VALIDADE;
+          if (!passou) {
+            const total = lerRolagem(pedido.mensagemId, user);
+            passou = total != null && total + prep.bonus >= Number(f.cd);
+          }
+          if (!passou) return avisar(userId, "Aviso.SemRolagem", {}, "warn");
+          liberados.delete(chave);
+        }
+        sucesso = pedido.sucesso === true;
+      }
+      const como = t(via === "minigame" ? "Chat.ComGazua" : "Chat.ComTeste");
+      if (sucesso) return destrancar(doc, { actor, userId, como });
+      return falhar(doc, f, actor, userId, prep.gazua?.uuid, via);
     }
   } catch (e) {
     console.error(`${ID} | pedido`, pedido, e);

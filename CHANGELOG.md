@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.5.2
+- **Quem decide é o mestre**: o resultado do teste de Ferramentas de Ladrão agora é conferido no mestre, pela rolagem que aparece no chat (ou pelo Dados em Cena), e não mais pelo que o jogador manda. Cada rolagem vale para uma tentativa só. O mestre também confere se o personagem é mesmo do jogador que pediu, se está ao alcance da fechadura, se ainda tem tentativas e se tem gazua quando a fechadura exige.
+- O resultado do minijogo ainda vem do jogador (fica para uma versão futura); mas agora o mestre exige a rolagem do "teste antes", quando ela está ligada.
+- Entrar numa região trancada: a fechadura passa a usar o destino do movimento do token, e não a posição no meio da animação.
+- Ao salvar a fechadura, o estado trancado/destrancado é gravado de uma vez, sem passar por um estado errado no meio.
+- O campo **Gazuas** só mexe nos usos de itens que já têm usos; nos outros, usa a quantidade.
+- Arrumações internas: avisos pelo socket validados, código morto removido, estilo duplicado do relógio dos minijogos unificado, novo formato do pacote da release.
+
 ## v1.5.1
 - **Gazuas na coluna "Usos" da ficha**: o campo **Gazuas** da configuração agora grava nos usos do item (ex.: 20/20). Cada gazua que quebra gasta um uso (19/20…). Acabando os usos, o item sai do inventário; se o item tiver mais de uma unidade, abre a próxima com os usos cheios. Itens sem usos (como "loot") continuam contando pela quantidade. A **Nova gazua** do painel já vem com 20 usos.
 - Gazua com os usos esgotados deixa de contar para arrombar.

@@ -175,10 +175,10 @@
 .lp-jogo .lp-vidas i { color: var(--lp-ouro); margin-left: 4px; transition: opacity 0.2s, color 0.2s; }
 .lp-jogo .lp-vidas i.quebrada { color: var(--lp-vermelho); opacity: 0.3; }
 .lp-jogo .lp-relogio { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-.lp-jogo .lp-relogio i { color: var(--lp-ouro); }
+.lp-jogo .lp-relogio i { color: var(--lp-mana); }
 .lp-jogo .lp-relogio-barra { flex: 1; height: 8px; border-radius: 4px; background: var(--lp-cartao-forte); overflow: hidden; }
-.lp-jogo .lp-relogio-barra div { height: 100%; width: 100%; background: var(--lp-ouro); transition: background 0.3s; }
-.lp-jogo .lp-relogio-barra div.pouco { background: var(--lp-vermelho); animation: lp-piscar 0.8s infinite alternate; }
+.lp-jogo .lp-relogio-barra div { height: 100%; width: 100%; background: linear-gradient(90deg, var(--lp-arcano), var(--lp-mana)); transition: background 0.3s; }
+.lp-jogo .lp-relogio-barra div.pouco { background: var(--lp-choque); animation: lp-piscar 0.8s infinite alternate; }
 .lp-jogo .lp-relogio em { opacity: 0.7; font-style: normal; }
 .lp-jogo .lp-palco {
   position: relative; border-radius: 14px; padding: 10px;
@@ -292,11 +292,6 @@
 /* ajustes de largura dos campos */
 .lp-config .lp-linha .lp-campo { flex-wrap: wrap; }
 .lp-config .lp-linha .lp-campo > input[type=number] { width: 5rem; max-width: 5rem; }
-
-/* relógio no tema arcano */
-.lp-jogo .lp-relogio i { color: var(--lp-mana); }
-.lp-jogo .lp-relogio-barra div { background: linear-gradient(90deg, var(--lp-arcano), var(--lp-mana)); }
-.lp-jogo .lp-relogio-barra div.pouco { background: var(--lp-choque); }
 
 /* Sigilo de traço */
 .lp-sigilo .lp-sigilo-svg { display: block; width: 100%; max-width: 330px; margin: 0 auto; }

@@ -331,11 +331,10 @@ export async function configurarFechadura(doc) {
   if (remoto) novo.modo = "chave";
   if (zerar) novo.falhas = {};
   const querTrancada = !!novo.trancada;
-  // a fechadura começa no estado antigo; sincronizar aplica o novo
-  novo.trancada = existe ? f.trancada : !querTrancada;
-  // troca o objeto inteiro (senão as falhas zeradas se misturariam com as antigas)
-  if (existe) await doc.unsetFlag(ID, "fechadura");
-  await doc.setFlag(ID, "fechadura", novo);
+  novo.trancada = querTrancada;
+  // "==" troca o objeto inteiro de uma vez (senão as falhas zeradas se misturariam com as antigas)
+  await doc.update({ [`flags.${ID}.==fechadura`]: novo });
+  // aplica o estado no objeto (porta, região, baú do Item Piles, gatilho)
   await sincronizar(doc, querTrancada);
   ui.notifications.info(t("Config.Salva", { nome: nomeFechadura(doc) }));
 }
@@ -390,7 +389,7 @@ export async function configurarChave(item) {
         ${cfgEquip && !equipavel ? `<p class="lp-aviso"><i class="fa-solid fa-triangle-exclamation"></i> ${t("Gazua.Item.NaoEquipa")}</p>` : ""}
         ${linha(t("Gazua.Item.Bonus"), `<input type="number" name="bonus" min="0" max="10" value="${gazua.bonus}">`, t("Gazua.Item.BonusDica"))}
         ${linha(t("Gazua.Item.Quantidade"), `<input type="number" name="quantidade" min="0" max="999" value="${usosItem(item)?.restam ?? (Number(item.system?.quantity) || 1)}">`,
-          t(item.system?.uses ? "Gazua.Item.QuantidadeDica" : "Gazua.Item.QuantidadeDicaSemUsos"))}
+          t(usosItem(item) ? "Gazua.Item.QuantidadeDica" : "Gazua.Item.QuantidadeDicaSemUsos"))}
         ${linha(t("Gazua.Item.Usos"), `<input type="number" name="usosGazua" min="1" value="${Math.max(1, gazua.usosMax)}">
           <label class="lp-inline"><input type="checkbox" name="zerarGazua"> ${t("Chave.Zerar", { n: gazua.usados })}</label>`, t("Gazua.Item.UsosDica"))}`, "lp-so-gazua")}
     </div>`;
@@ -438,9 +437,9 @@ export async function configurarChave(item) {
     if (c) await item.unsetFlag(ID, "chave");
     const upd = { [`flags.${ID}.gazua`]: nova };
     const n = Math.max(0, Math.floor(Number(r.quantidade) || 0));
-    if (item.system?.uses) {
-      // as gazuas ficam nos "Usos" da ficha (ex.: 20/20); só mexe se o número mudou
-      if (n !== usosItem(item)?.restam) { upd["system.uses.max"] = String(n); upd["system.uses.spent"] = 0; }
+    if (usosItem(item)) {
+      // as gazuas ficam nos "Usos" da ficha (ex.: 20/20), só em itens que já têm usos; só mexe se o número mudou
+      if (n !== usosItem(item).restam) { upd["system.uses.max"] = String(n); upd["system.uses.spent"] = 0; }
     } else if (item.system && "quantity" in item.system) {
       upd["system.quantity"] = n;
     }

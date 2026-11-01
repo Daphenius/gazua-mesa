@@ -1,21 +1,36 @@
+# Ao publicar uma release no GitHub, monta o ZIP do módulo e anexa
+# gazua-mesa.zip e module.json nela (é o que o Foundry baixa).
 name: Release
+
 on:
   release:
     types: [published]
+
 permissions:
   contents: write
+
 jobs:
-  pacote:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Conferir versão e empacotar
-        env:
-          GH_TOKEN: ${{ github.token }}
+
+      - name: Conferir a versão
         run: |
-          ID=$(jq -r .id module.json)
-          VER=$(jq -r .version module.json)
           TAG="${GITHUB_REF_NAME#v}"
-          if [ "$TAG" != "$VER" ]; then echo "Tag $GITHUB_REF_NAME diferente da versão $VER do module.json"; exit 1; fi
-          zip -r "$ID.zip" . -x ".git/*" ".github/*" "*.zip" "CHANGELOG.md"
-          gh release upload "$GITHUB_REF_NAME" "$ID.zip" module.json --clobber
+          VER=$(jq -r .version module.json)
+          if [ "$TAG" != "$VER" ]; then
+            echo "A tag (${GITHUB_REF_NAME}) não bate com a versão do module.json (${VER})."
+            exit 1
+          fi
+          grep -q "releases/download/v${VER}/gazua-mesa.zip" module.json || { echo "O link de download do module.json não aponta para v${VER}."; exit 1; }
+
+      - name: Montar o ZIP (module.json na raiz)
+        run: zip -r gazua-mesa.zip module.json scripts styles lang README.md CHANGELOG.md LICENSE
+
+      - name: Anexar na release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            gazua-mesa.zip
+            module.json
