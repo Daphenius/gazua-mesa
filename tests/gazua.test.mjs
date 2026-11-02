@@ -472,3 +472,75 @@ test("Dados em Cena: teste 'para abrir' recusado numa fechadura só de minijogo"
   assert.equal(estaTrancada(porta), true);
   assert.equal(resposta("dc3").dados, false);
 });
+
+/* ---------- v1.6.2: a volta da rolagem do Dados em Cena confere de novo o personagem ---------- */
+
+/** Mundo com Dados em Cena cuja rolagem fica pendente até `rolar(total)`. */
+function comDadosPendente() {
+  const ctl = {};
+  mundo = criarMundo({ ajustes: { testeDadosEmCena: "animada" } });
+  game.modules.set("dados-em-cena", { active: true, api: { pedirTeste: () => new Promise(r => { ctl.rolar = total => r({ total }); }) } });
+  mundo.criarCena();
+  return ctl;
+}
+const tokenDe = actor => mundo.cena.tokens.find(td => td.actor === actor);
+
+test("Dados em Cena: personagem que se afasta durante a rolagem não abre a porta", async () => {
+  const ctl = comDadosPendente();
+  const { base, actor, porta } = cenario({ modo: "ambos" });
+  pedido({ ...base, tipo: "testeDC", pedidoId: "dc4", finalidade: "teste" });
+  await esvaziar();
+  tokenDe(actor).x = 800;   // anda para longe
+  ctl.rolar(25);
+  await esvaziar();
+  assert.equal(estaTrancada(porta), true);
+  assert.ok(mundo.chavesDeAviso("p1").includes("Aviso.Longe"));
+});
+
+test("Dados em Cena: personagem que se afasta não registra falha nem quebra gazua", async () => {
+  const ctl = comDadosPendente();
+  const { base, actor, item, porta } = cenario({ modo: "ambos" }, { gazua: { quantidade: 2 } });
+  pedido({ ...base, tipo: "testeDC", pedidoId: "dc5", finalidade: "teste" });
+  await esvaziar();
+  tokenDe(actor).x = 800;
+  ctl.rolar(1);
+  await esvaziar();
+  assert.equal(falhasDe(porta, actor), 0);
+  assert.equal(item.system.quantity, 2);
+});
+
+test("Dados em Cena: personagem que se afasta não ganha autorização para o minijogo", async () => {
+  const ctl = comDadosPendente();
+  const { base, actor, porta } = cenario({ modo: "minigame", testeAntes: true });
+  pedido({ ...base, tipo: "testeDC", pedidoId: "dc6", finalidade: "minigame" });
+  await esvaziar();
+  tokenDe(actor).x = 800;
+  ctl.rolar(25);
+  await esvaziar();
+  tokenDe(actor).x = 0;     // volta e tenta começar o minijogo sem rolar de novo
+  const s = await iniciar(base);
+  assert.equal(s, false);
+  assert.equal(lerSessao(porta, "p1"), null);
+});
+
+test("Dados em Cena: personagem que deixou de ser do jogador durante a rolagem não abre", async () => {
+  const ctl = comDadosPendente();
+  const { base, actor, porta } = cenario({ modo: "ambos" });
+  pedido({ ...base, tipo: "testeDC", pedidoId: "dc7", finalidade: "teste" });
+  await esvaziar();
+  actor.donos = [];
+  ctl.rolar(25);
+  await esvaziar();
+  assert.equal(estaTrancada(porta), true);
+  assert.ok(mundo.chavesDeAviso("p1").includes("Aviso.NaoSeuPersonagem"));
+});
+
+test("Dados em Cena: quem continua perto abre normalmente", async () => {
+  const ctl = comDadosPendente();
+  const { base, porta } = cenario({ modo: "ambos" });
+  pedido({ ...base, tipo: "testeDC", pedidoId: "dc8", finalidade: "teste" });
+  await esvaziar();
+  ctl.rolar(25);
+  await esvaziar();
+  assert.equal(estaTrancada(porta), false);
+});

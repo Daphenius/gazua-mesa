@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.2
+- **Teste pelo Dados em Cena**: quando a rolagem chega, o mestre confere de novo se o personagem ainda é do jogador e ainda está ao alcance da fechadura. Quem se afastou durante a rolagem não abre a porta, não registra falha, não quebra gazua e não fica liberado para o minijogo.
+- 5 testes novos para esse caso (55 no total).
+
 ## v1.6.1
 Correções de uma revisão externa (obrigado!):
 - **Pedidos ao mesmo tempo**: o mestre agora trata um pedido de cada vez, relendo a fechadura e o inventário antes de gastar qualquer coisa. Dois cliques juntos não gastam duas chaves nem abrem a porta duas vezes; duas falhas juntas não passam do limite de tentativas nem quebram gazua a mais. A espera pela rolagem do Dados em Cena não trava os outros pedidos, e a decisão relê a fechadura quando a rolagem chega. Na janela do jogador, a chave também não aceita clique repetido.

@@ -512,10 +512,16 @@ async function esperarTesteDC(pedido, userId, actor, bonus, cd) {
   responder(userId, pedido.pedidoId, total);
   if (total == null) return;
   return emFila(async () => {
+    // a rolagem pode ter levado minutos: relê tudo e confere de novo o personagem (dono e alcance)
+    const user = game.users.get(userId);
     const doc = await fromUuid(String(pedido.uuid ?? ""));
     const f = lerFechadura(doc);
+    if (!user) return;
     if (!f) return avisar(userId, "Aviso.SemFechadura", {}, "warn");
     if (!estaTrancada(doc, f)) return avisar(userId, "Aviso.JaAberta");
+    const atual = await fromUuid(String(pedido.actorUuid ?? ""));
+    const problema = atual === actor ? conferirPedido(doc, f, atual, user) : "Aviso.SemToken";
+    if (problema) return avisar(userId, problema, {}, "warn");
     const prep = prepararArrombar(f, actor);
     if (prep.erro) return avisar(userId, prep.erro, {}, "warn");
     if (total < Number(f.cd)) return falhar(doc, f, actor, userId, prep.gazua?.uuid, "teste");
