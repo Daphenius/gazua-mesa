@@ -343,3 +343,132 @@ test("labirinto: a resistência acompanha o tamanho (passada na criação)", () 
   const l = criarLogica("labirinto", p, 3);
   assert.equal(l.vidasMax, Math.round(l.s * 1.2) + 2 + 1);
 });
+
+/* ---------- v1.6.1: concorrência, estoque e modalidade ---------- */
+
+test("pedidos simultâneos: dois pedidos de chave abrem uma vez e gastam uma chave", async () => {
+  const { actor, porta } = cenario({ segredos: "ferro" });
+  const chave = mundo.criarItem(actor, { name: "Chave", type: "loot", system: { quantity: 3 }, flags: { [ID]: { chave: { ativa: true, segredos: "ferro" } } } });
+  const p = { tipo: "chave", uuid: porta.uuid, actorUuid: actor.uuid, itemUuid: chave.uuid };
+  await Promise.all([pedido(p), pedido(p)]);
+  assert.equal(chave.system.quantity, 2);
+  assert.equal(Hooks.chamados.filter(h => h === "gazua-mesa.destrancou").length, 1);
+});
+
+test("pedidos simultâneos: com uma tentativa, duas falhas juntas contam uma e quebram uma gazua", async () => {
+  const { base, actor, item, porta } = cenario({ tentativas: 1 }, { gazua: { quantidade: 3 } });
+  await Promise.all([falharTeste(base), falharTeste(base)]);
+  assert.equal(falhasDe(porta, actor), 1);
+  assert.equal(item.system.quantity, 2);
+  assert.ok(mundo.chavesDeAviso("p1").includes("Aviso.SemTentativas"));
+});
+
+test("Dados em Cena: esperar a rolagem não trava os outros pedidos", async () => {
+  let rolar;
+  mundo = criarMundo({ ajustes: { testeDadosEmCena: "animada" } });
+  game.modules.set("dados-em-cena", { active: true, api: { pedirTeste: () => new Promise(r => { rolar = r; }) } });
+  mundo.criarCena();
+  const { base, porta } = cenario({ modo: "ambos" });
+  const outra = mundo.criarPorta({ segredos: "x" }, { x: 0, y: 1 });
+  const ator2 = mundo.criarAtor({ nome: "Guerreiro", dono: "p2", x: 0, y: 2 });
+  const chave = mundo.criarItem(ator2, { name: "Chave", type: "loot", flags: { [ID]: { chave: { ativa: true, segredos: "x" } } } });
+  const teste = pedido({ ...base, tipo: "testeDC", pedidoId: "dc1", finalidade: "teste" });
+  await esvaziar();
+  await pedido({ tipo: "chave", uuid: outra.uuid, actorUuid: ator2.uuid, itemUuid: chave.uuid }, "p2");
+  assert.equal(estaTrancada(outra), false, "a chave do outro jogador abriu enquanto o teste esperava");
+  rolar({ total: 20 });
+  await teste; await esvaziar();
+  assert.equal(estaTrancada(porta), false);
+});
+
+test("Dados em Cena: a fechadura aberta enquanto o jogador rolava não abre de novo", async () => {
+  let rolar;
+  mundo = criarMundo({ ajustes: { testeDadosEmCena: "animada" } });
+  game.modules.set("dados-em-cena", { active: true, api: { pedirTeste: () => new Promise(r => { rolar = r; }) } });
+  mundo.criarCena();
+  const { base, porta } = cenario({ modo: "ambos" });
+  pedido({ ...base, tipo: "testeDC", pedidoId: "dc2", finalidade: "teste" });
+  await esvaziar();
+  porta.ds = CONST.WALL_DOOR_STATES.OPEN;
+  rolar({ total: 20 });
+  await esvaziar();
+  assert.equal(Hooks.chamados.filter(h => h === "gazua-mesa.destrancou").length, 0);
+});
+
+test("minijogo de outra abertura: destrancar encerra as sessões; trancar de novo não traz falha antiga", async () => {
+  const { base, actor, item, porta } = cenario({ segredos: "ferro", tempo: 0 }, { gazua: { quantidade: 2 } });
+  await iniciar(base);
+  const b = mundo.criarAtor({ nome: "Bardo", dono: "p2" });
+  const chave = mundo.criarItem(b, { name: "Chave", type: "loot", flags: { [ID]: { chave: { ativa: true, segredos: "ferro" } } } });
+  await pedido({ tipo: "chave", uuid: porta.uuid, actorUuid: b.uuid, itemUuid: chave.uuid }, "p2");
+  assert.equal(lerSessao(porta, "p1"), null, "a sessão de A acabou com a abertura");
+  porta.ds = CONST.WALL_DOOR_STATES.LOCKED;   // o mestre tranca de novo
+  mock.timers.tick(5 * 60000 + 2000);
+  await esvaziar();
+  assert.equal(falhasDe(porta, actor), 0);
+  assert.equal(item.system.quantity, 2);
+  // e o resultado atrasado de A também não vale
+  await pedido({ ...base, tipo: "arrombar", via: "minigame", registro: [] });
+  assert.deepEqual(mundo.chavesDeAviso("p1").at(-1), "Aviso.SemJogo");
+  assert.equal(falhasDe(porta, actor), 0);
+});
+
+test("chave mestra empilhada: cada unidade tem os próprios usos (2 x 2 usos = 4 aberturas)", async () => {
+  const { actor, porta } = cenario();
+  const mestra = mundo.criarItem(actor, { name: "Mestra", type: "loot", system: { quantity: 2 }, flags: { [ID]: { chave: { ativa: true, mestra: true, usosMax: 2, usados: 0 } } } });
+  let aberturas = 0;
+  for (let k = 0; k < 6; k++) {
+    porta.ds = CONST.WALL_DOOR_STATES.LOCKED;
+    await pedido({ tipo: "chave", uuid: porta.uuid, actorUuid: actor.uuid, itemUuid: mestra.uuid });
+    if (!estaTrancada(porta)) aberturas++;
+  }
+  assert.equal(aberturas, 4);
+  assert.ok(!actor.items.has(mestra.id));
+});
+
+test("gazua com quantidade zero não serve", async () => {
+  const { base, actor, porta } = cenario({ exigeFerramentas: true }, { gazua: { quantidade: 0 } });
+  const { gazuaDoAtor } = await import("../scripts/dados.js");
+  assert.equal(gazuaDoAtor(actor), null);
+  await pedido({ ...base, tipo: "arrombar", via: "teste", mensagemId: mundo.criarRolagem("p1", 30) });
+  assert.deepEqual(mundo.chavesDeAviso("p1"), ["Janela.SemFerramentas"]);
+  assert.equal(estaTrancada(porta), true);
+});
+
+test("chave com quantidade zero não abre", async () => {
+  const { actor, porta } = cenario({ segredos: "ferro" });
+  const chave = mundo.criarItem(actor, { name: "Chave", type: "loot", system: { quantity: 0 }, flags: { [ID]: { chave: { ativa: true, segredos: "ferro" } } } });
+  await pedido({ tipo: "chave", uuid: porta.uuid, actorUuid: actor.uuid, itemUuid: chave.uuid });
+  assert.equal(estaTrancada(porta), true);
+});
+
+test("fechadura só de minijogo: teste simples bem-sucedido não destranca", async () => {
+  const { base, porta } = cenario({ modo: "minigame", testeAntes: true });
+  await pedido({ ...base, tipo: "arrombar", via: "teste", mensagemId: mundo.criarRolagem("p1", 30) });
+  assert.equal(estaTrancada(porta), true);
+  assert.deepEqual(mundo.chavesDeAviso("p1"), ["Aviso.SemTeste"]);
+});
+
+test("fechadura só de minijogo: a falha no teste antes ainda conta", async () => {
+  const { base, actor, porta } = cenario({ modo: "minigame", testeAntes: true });
+  await falharTeste(base);
+  assert.equal(falhasDe(porta, actor), 1);
+});
+
+test("fechadura só de minijogo, sem teste antes: nenhum teste vale", async () => {
+  const { base, actor, porta } = cenario({ modo: "minigame", testeAntes: false });
+  await falharTeste(base);
+  assert.equal(falhasDe(porta, actor), 0);
+  assert.deepEqual(mundo.chavesDeAviso("p1"), ["Aviso.SemTeste"]);
+});
+
+test("Dados em Cena: teste 'para abrir' recusado numa fechadura só de minijogo", async () => {
+  mundo = criarMundo({ ajustes: { testeDadosEmCena: "animada" } });
+  game.modules.set("dados-em-cena", { active: true, api: { pedirTeste: async () => ({ total: 30 }) } });
+  mundo.criarCena();
+  const { base, porta } = cenario({ modo: "minigame", testeAntes: true });
+  await pedido({ ...base, tipo: "testeDC", pedidoId: "dc3", finalidade: "teste" });
+  await esvaziar();
+  assert.equal(estaTrancada(porta), true);
+  assert.equal(resposta("dc3").dados, false);
+});

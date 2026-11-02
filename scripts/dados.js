@@ -133,8 +133,19 @@ export function iconeTipo(nome) {
   }[nome] ?? "fa-lock";
 }
 
+/**
+ * O item ainda existe no inventário? Quantidade zero não conta (itens sem o campo quantidade valem 1),
+ * e itens com usos na ficha precisam ter algum uso sobrando.
+ */
+export function temEstoque(item) {
+  if (!item) return false;
+  const q = item.system?.quantity;
+  if (q !== undefined && q !== null && !(Number(q) > 0)) return false;
+  return usosItem(item)?.restam !== 0;
+}
+
 export function chavesDoAtor(actor) {
-  return (actor?.items?.contents ?? []).filter(i => lerChave(i));
+  return (actor?.items?.contents ?? []).filter(i => lerChave(i) && temEstoque(i));
 }
 
 /**
@@ -171,7 +182,7 @@ export const estaEquipada = item => item?.system?.equipped === true;
 /** As gazuas que o personagem pode usar agora (equipadas, se a opção exigir). */
 export function gazuasDoAtor(actor) {
   const todas = itensGazua(actor);
-  const comUso = todas.filter(i => usosItem(i)?.restam !== 0);   // usos esgotados não servem
+  const comUso = todas.filter(temEstoque);   // quantidade zero ou usos esgotados não servem
   return cfg("gazuaEquipada") ? comUso.filter(estaEquipada) : comUso;
 }
 

@@ -88,7 +88,8 @@
       "JogoExpirou": "The lockpicking game stayed open too long and the attempt counted as a failure.",
       "JogoEmAndamento": "You're already picking this lock with another character. Finish that game first.",
       "SemResposta": "The GM didn't answer. Try again.",
-      "SemMinijogo": "This lock doesn't allow the lockpicking game."
+      "SemMinijogo": "This lock doesn't allow the lockpicking game.",
+      "SemTeste": "This lock can't be opened with a simple check."
     },
     "Chat": {
       "Alguem": "Someone",

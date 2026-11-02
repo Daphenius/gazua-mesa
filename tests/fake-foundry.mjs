@@ -143,6 +143,7 @@ class Ator extends Doc {
  */
 export function criarMundo({ lang = "pt-BR", ajustes = {} } = {}) {
   const textos = lerIdioma(lang);
+  Hooks.chamados = [];
   const mundo = {
     porUuid: new Map(),
     atualizacoes: [],

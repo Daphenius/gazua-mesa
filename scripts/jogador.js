@@ -163,14 +163,17 @@ export class JanelaFechadura extends ApplicationV2 {
   }
 
   static async #usarChave(event, alvo) {
-    if (!this.#conferir()) return;
+    if (this.ocupado || !this.#conferir()) return;
     const item = await fromUuid(alvo.dataset.item);
     const f = lerFechadura(this.doc);
     if (!item || !f) return;
     if (!chaveServe(lerChave(item), f).serve) {
       return ui.notifications.warn(t("Aviso.NaoServe", { chave: item.name }));
     }
+    // um clique por vez (o mestre também confere, mas assim nem sai o pedido repetido)
+    this.ocupado = true;
     pedir({ tipo: "chave", uuid: this.doc.uuid, actorUuid: this.actor.uuid, itemUuid: item.uuid });
+    setTimeout(() => { this.ocupado = false; if (this.rendered) this.render(); }, 1500);
   }
 
   /**

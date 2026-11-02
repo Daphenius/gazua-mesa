@@ -4,7 +4,7 @@ import {
   ID, SOCKET, TIPOS, t, cfg, lerFechadura, lerChave, estaTrancada, podeTerFechadura, chaveServe,
   regiaoContem, lerGazua
 } from "./dados.js";
-import { aoReceber, destrancar, trancar, souMestreAtivo, limparSessoes } from "./mestre.js";
+import { aoReceber, destrancar, trancar, souMestreAtivo, limparSessoes, encerrarSessoes } from "./mestre.js";
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
 import { configurarFechadura, configurarChave, removerFechadura, PainelFechaduras } from "./config.js";
 import { JanelaMinijogos } from "./ajustes.js";
@@ -195,7 +195,12 @@ Hooks.on("activateNote", note => {
 // ---------- Atualizar janelas abertas ----------
 
 for (const tipo of [...TIPOS, "Item"]) {
-  Hooks.on(`update${tipo}`, doc => atualizarJanelas(doc));
+  Hooks.on(`update${tipo}`, doc => {
+    atualizarJanelas(doc);
+    // destrancada por qualquer caminho (ex.: o mestre no clique direito da porta): os minijogos em andamento acabam
+    if (tipo !== "Item" && souMestreAtivo() && doc.flags?.[ID]?.jogos && Object.keys(doc.flags[ID].jogos).length
+      && lerFechadura(doc) && !estaTrancada(doc)) encerrarSessoes(doc).catch(console.error);
+  });
 }
 // Item novo: atualiza as janelas e, se for gazua ou chave dada a um token NÃO vinculado de um
 // personagem de jogador (ela fica só naquele token e some da ficha ao entrar de novo), avisa o mestre.

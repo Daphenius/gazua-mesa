@@ -88,7 +88,8 @@
       "JogoExpirou": "O minijogo ficou aberto tempo demais e a tentativa contou como falha.",
       "JogoEmAndamento": "Você já está arrombando esta fechadura com outro personagem. Termine aquele minijogo primeiro.",
       "SemResposta": "O mestre não respondeu. Tente de novo.",
-      "SemMinijogo": "Esta fechadura não aceita o minijogo."
+      "SemMinijogo": "Esta fechadura não aceita o minijogo.",
+      "SemTeste": "Esta fechadura não abre com o teste simples."
     },
     "Chat": {
       "Alguem": "Alguém",

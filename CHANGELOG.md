@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.6.1
+Correções de uma revisão externa (obrigado!):
+- **Pedidos ao mesmo tempo**: o mestre agora trata um pedido de cada vez, relendo a fechadura e o inventário antes de gastar qualquer coisa. Dois cliques juntos não gastam duas chaves nem abrem a porta duas vezes; duas falhas juntas não passam do limite de tentativas nem quebram gazua a mais. A espera pela rolagem do Dados em Cena não trava os outros pedidos, e a decisão relê a fechadura quando a rolagem chega. Na janela do jogador, a chave também não aceita clique repetido.
+- **Minijogos de outra abertura**: quando a fechadura é destrancada (por chave, teste, minijogo ou pelo mestre), os minijogos em andamento nela acabam, sem falha. Trancar de novo não traz de volta a falha de uma tentativa antiga.
+- **Chave mestra empilhada**: ao gastar uma unidade, a próxima da pilha começa com os usos cheios (duas chaves de 2 usos = 4 aberturas).
+- **Quantidade zero**: gazua ou chave com quantidade 0 não serve mais, nem na janela nem na conferência do mestre.
+- **Modo da fechadura**: o mestre confere se a forma pedida é permitida. Numa fechadura só de minijogo, o teste simples não destranca; com "passar na CD antes", a falha nesse teste ainda conta.
+- 12 testes novos cobrindo esses casos (50 no total).
+
 ## v1.6.0
 - **O mestre decide o minijogo**: o computador do mestre escolhe o jogo e sorteia a "semente" que monta o desafio; o jogador joga a partir dela e manda as jogadas; o mestre monta o mesmo desafio, refaz as jogadas e decide se abriu. Antes, quem dizia "abri" era o computador do jogador.
 - O "teste antes" do minijogo agora é conferido no começo do jogo, e o tempo extra pela margem na CD é calculado pelo mestre.

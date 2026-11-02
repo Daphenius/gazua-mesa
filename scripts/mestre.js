@@ -3,7 +3,7 @@
 
 import {
   ID, SOCKET, REMOTOS, t, esc, cfg, lerFechadura, lerChave, lerGazua, usosItem, estaTrancada, chaveServe, nomeFechadura, apiDados,
-  aoAlcance, gazuaDoAtor, todasFechaduras
+  aoAlcance, gazuaDoAtor, todasFechaduras, temEstoque
 } from "./dados.js";
 import { parametros, escolherJogo } from "./jogos.js";
 import { conferir, novaSemente } from "./logica.js";
@@ -92,6 +92,8 @@ async function anunciar(html, actor) {
 export async function sincronizar(doc, trancada) {
   const f = lerFechadura(doc);
   if (!f) return;
+  // destrancou: os minijogos em andamento eram desta tentativa e acabam aqui
+  if (!trancada) await encerrarSessoes(doc);
 
   if (doc.documentName === "Wall") {
     const E = ESTADO();
@@ -213,9 +215,10 @@ export async function trancar(doc) {
   Hooks.callAll(`${ID}.trancou`, doc);
 }
 
-async function gastarItem(item) {
+/** Gasta uma unidade do item. `reiniciar` zera o desgaste da próxima unidade da pilha. */
+async function gastarItem(item, reiniciar = {}) {
   const q = Number(item.system?.quantity);
-  if (q > 1) return item.update({ "system.quantity": q - 1 });
+  if (q > 1) return item.update({ "system.quantity": q - 1, ...reiniciar });
   return item.delete();
 }
 
@@ -294,13 +297,21 @@ async function apagarSessao(doc, userId) {
   if (lerSessao(doc, userId)) await doc.unsetFlag(ID, `jogos.${userId}`);
 }
 
+/** Encerra, sem falha, todos os minijogos em andamento na fechadura (ela foi destrancada). */
+export async function encerrarSessoes(doc) {
+  for (const k of [...relogios.keys()]) {
+    if (k.endsWith(`:${doc.uuid}`)) { clearTimeout(relogios.get(k)); relogios.delete(k); }
+  }
+  if (Object.keys(doc.flags?.[ID]?.jogos ?? {}).length) await doc.unsetFlag(ID, "jogos");
+}
+
 function agendarExpiracao(doc, userId, s) {
   const k = `${userId}:${doc.uuid}`;
   clearTimeout(relogios.get(k));
   const espera = Math.max(0, s.validade - Date.now()) + 1000;
   relogios.set(k, setTimeout(() => {
     relogios.delete(k);
-    expirar(doc, userId, s).catch(e => console.error(`${ID} | expirar minijogo`, e));
+    emFila(() => expirar(doc, userId, s)).catch(e => console.error(`${ID} | expirar minijogo`, e));
   }, espera));
 }
 
@@ -325,10 +336,38 @@ export async function limparSessoes() {
   for (const doc of new Set(docs)) {
     for (const [userId, s] of Object.entries(doc.flags?.[ID]?.jogos ?? {})) {
       if (!s) continue;
-      if (Date.now() > s.validade) await expirar(doc, userId, s).catch(e => console.error(`${ID} | expirar minijogo`, e));
+      if (Date.now() > s.validade) await emFila(() => expirar(doc, userId, s)).catch(e => console.error(`${ID} | expirar minijogo`, e));
       else agendarExpiracao(doc, userId, s);
     }
   }
+}
+
+// ---------- Fila ----------
+// O mestre trata um pedido de cada vez, e cada um relê a fechadura e o inventário ao começar.
+// Assim, dois cliques juntos não gastam duas chaves nem abrem a porta duas vezes.
+// (A espera pela rolagem do Dados em Cena acontece fora da fila, para não travar os outros.)
+let fila = Promise.resolve();
+
+function emFila(fn) {
+  const r = fila.then(() => fn());
+  fila = r.catch(() => {});
+  return r;
+}
+
+// ---------- Modalidades ----------
+/** O teste simples (sozinho) pode destrancar esta fechadura? */
+const testeAbre = f => f.modo === "teste" || f.modo === "ambos";
+/** Esta fechadura aceita o minijogo? */
+const aceitaMinijogo = f => f.modo === "minigame" || f.modo === "ambos";
+
+/** Arrombar (teste ou minijogo): o mestre confere o modo, as tentativas e a gazua. */
+function prepararArrombar(f, actor) {
+  if (f.modo === "chave") return { erro: "Aviso.SoChave" };
+  const falhas = Number(f.falhas?.[actor.id] ?? 0);
+  if (f.tentativas > 0 && falhas >= f.tentativas) return { erro: "Aviso.SemTentativas" };
+  const gazua = gazuaDoAtor(actor);
+  if (f.exigeFerramentas && !gazua) return { erro: "Janela.SemFerramentas" };
+  return { gazua, bonus: lerGazua(gazua)?.bonus ?? 0 };
 }
 
 /** Lê o total da rolagem de Ferramentas de Ladrão feita pelo próprio remetente; null se não vale. */
@@ -361,7 +400,12 @@ async function falhar(doc, f, actor, userId, gazuaUuid, via) {
   await desgastarGazua(gazuaUuid, actor, userId, via);
 }
 
-export async function processar(pedido, userId) {
+/** Pedido de um jogador: entra na fila do mestre. */
+export function processar(pedido, userId) {
+  return emFila(() => processarAgora(pedido, userId));
+}
+
+async function processarAgora(pedido, userId) {
   if (!pedido || typeof pedido !== "object") return;
   try {
     const user = game.users.get(userId);
@@ -379,52 +423,34 @@ export async function processar(pedido, userId) {
     const problema = conferirPedido(doc, f, actor, user);
     if (problema) { desistir(); return avisar(userId, problema, {}, "warn"); }
 
-    // Arrombar (teste ou minijogo): o mestre confere o modo, as tentativas e a gazua
-    const prepararArrombar = () => {
-      if (f.modo === "chave") return { erro: "Aviso.SoChave" };
-      const falhas = Number(f.falhas?.[actor.id] ?? 0);
-      if (f.tentativas > 0 && falhas >= f.tentativas) return { erro: "Aviso.SemTentativas" };
-      const gazua = gazuaDoAtor(actor);
-      if (f.exigeFerramentas && !gazua) return { erro: "Janela.SemFerramentas" };
-      return { gazua, bonus: lerGazua(gazua)?.bonus ?? 0 };
-    };
-
     if (pedido.tipo === "testeDC") {
-      const prep = prepararArrombar();
+      // o teste "antes do minijogo" só serve onde há minijogo com teste antes; o teste para abrir, onde ele abre
+      const prep = prepararArrombar(f, actor);
       if (prep.erro) { desistir(); return avisar(userId, prep.erro, {}, "warn"); }
-      const api = apiDados();
-      let r = null;
-      try {
-        r = api && await api.pedirTeste({
-          tokenId: pedido.tokenId, actorId: actor.id, sceneId: pedido.sceneId,
-          config: { kind: "tool", toolKey: "thief", label: t("Teste.Ferramenta") },
-          cd: Number(f.cd), modo: pedido.modo === "simples" ? "chat" : "tela",
-          para: [userId], bonus: prep.bonus, tempoLimite: 120000
-        });
-      } catch (e) { console.error(`${ID} | Dados em Cena`, e); }
-      const total = Number.isFinite(Number(r?.total)) ? Number(r.total) : null;
-      responder(userId, pedido.pedidoId, total);
-      if (total == null) return;
-      // o mestre já tem o resultado: decide aqui mesmo
-      const passou = total >= Number(f.cd);
-      if (!passou) return falhar(doc, f, actor, userId, prep.gazua?.uuid, "teste");
-      if (pedido.finalidade === "minigame") { liberados.set(`${userId}:${doc.uuid}`, { quando: Date.now(), total }); return; }
-      return destrancar(doc, { actor, userId, como: t("Chat.ComTeste") });
+      const permitido = pedido.finalidade === "minigame" ? aceitaMinijogo(f) && f.testeAntes : testeAbre(f);
+      if (!permitido) { desistir(); return avisar(userId, "Aviso.SemTeste", {}, "warn"); }
+      // a rolagem pode levar minutos: o mestre espera fora da fila e depois volta para decidir
+      esperarTesteDC(pedido, userId, actor, prep.bonus, Number(f.cd)).catch(e => {
+        console.error(`${ID} | Dados em Cena`, e);
+        responder(userId, pedido.pedidoId, null);
+      });
+      return;
     }
 
-    if (pedido.tipo === "iniciarJogo") return iniciarJogo(pedido, doc, f, actor, user, prepararArrombar(), desistir);
+    if (pedido.tipo === "iniciarJogo") return iniciarJogo(pedido, doc, f, actor, user, prepararArrombar(f, actor), desistir);
 
     if (pedido.tipo === "chave") {
       const item = await fromUuid(String(pedido.itemUuid ?? ""));
       const chave = lerChave(item);
-      if (!item || !chave || item.parent?.uuid !== actor?.uuid) return avisar(userId, "Aviso.ChaveSumiu", {}, "warn");
+      if (!item || !chave || !temEstoque(item) || item.parent?.uuid !== actor?.uuid) return avisar(userId, "Aviso.ChaveSumiu", {}, "warn");
       const r = chaveServe(chave, f);
       if (!r.serve) return avisar(userId, "Aviso.NaoServe", { chave: item.name }, "warn");
       const nomeChave = esc(item.name);
       if (r.porMestra) {
         const usados = (chave.usados ?? 0) + 1;
         if (chave.usosMax > 0 && usados >= chave.usosMax) {
-          await gastarItem(item);
+          // a próxima chave da pilha começa nova
+          await gastarItem(item, { [`flags.${ID}.chave.usados`]: 0 });
           avisar(userId, "Aviso.MestraGasta", { chave: item.name }, "warn");
         } else {
           await item.update({ [`flags.${ID}.chave.usados`]: usados });
@@ -440,14 +466,18 @@ export async function processar(pedido, userId) {
       // minijogo: a sessão acaba aqui, dê o resultado que der
       const sessao = via === "minigame" ? lerSessao(doc, userId) : null;
       if (sessao) await apagarSessao(doc, userId);
-      const prep = prepararArrombar();
+      const prep = prepararArrombar(f, actor);
       if (prep.erro) return avisar(userId, prep.erro, {}, "warn");
+      // teste: só onde o teste abre, ou onde ele vem antes do minijogo (aí só a falha conta)
+      if (via === "teste" && !testeAbre(f) && !(aceitaMinijogo(f) && f.testeAntes)) return avisar(userId, "Aviso.SemTeste", {}, "warn");
       let sucesso;
       if (via === "teste") {
         // o veredito sai da rolagem no chat, lida aqui no mestre
         const total = lerRolagem(pedido.mensagemId, user);
         if (total == null) return avisar(userId, "Aviso.SemRolagem", {}, "warn");
         sucesso = total + prep.bonus >= Number(f.cd);
+        // passar no teste antes do minijogo não abre a fechadura: o jogador ainda precisa do minijogo
+        if (sucesso && !testeAbre(f)) return avisar(userId, "Aviso.SemTeste", {}, "warn");
       } else {
         // minijogo: o mestre refaz as jogadas com a semente que ele mesmo sorteou
         if (!sessao || sessao.actorUuid !== actor.uuid) return avisar(userId, "Aviso.SemJogo", {}, "warn");
@@ -462,6 +492,37 @@ export async function processar(pedido, userId) {
     if (pedido.tipo === "testeDC" || pedido.tipo === "iniciarJogo") responder(userId, pedido.pedidoId, false);
     avisar(userId, "Aviso.Erro", {}, "error");
   }
+}
+
+// ---------- Dados em Cena ----------
+
+/** Espera a rolagem (fora da fila) e decide na fila, relendo a fechadura e o inventário. */
+async function esperarTesteDC(pedido, userId, actor, bonus, cd) {
+  const api = apiDados();
+  let r = null;
+  try {
+    r = api && await api.pedirTeste({
+      tokenId: pedido.tokenId, actorId: actor.id, sceneId: pedido.sceneId,
+      config: { kind: "tool", toolKey: "thief", label: t("Teste.Ferramenta") },
+      cd, modo: pedido.modo === "simples" ? "chat" : "tela",
+      para: [userId], bonus, tempoLimite: 120000
+    });
+  } catch (e) { console.error(`${ID} | Dados em Cena`, e); }
+  const total = Number.isFinite(Number(r?.total)) ? Number(r.total) : null;
+  responder(userId, pedido.pedidoId, total);
+  if (total == null) return;
+  return emFila(async () => {
+    const doc = await fromUuid(String(pedido.uuid ?? ""));
+    const f = lerFechadura(doc);
+    if (!f) return avisar(userId, "Aviso.SemFechadura", {}, "warn");
+    if (!estaTrancada(doc, f)) return avisar(userId, "Aviso.JaAberta");
+    const prep = prepararArrombar(f, actor);
+    if (prep.erro) return avisar(userId, prep.erro, {}, "warn");
+    if (total < Number(f.cd)) return falhar(doc, f, actor, userId, prep.gazua?.uuid, "teste");
+    if (pedido.finalidade === "minigame") { liberados.set(`${userId}:${doc.uuid}`, { quando: Date.now(), total }); return; }
+    if (!testeAbre(f)) return avisar(userId, "Aviso.SemTeste", {}, "warn");
+    return destrancar(doc, { actor, userId, como: t("Chat.ComTeste") });
+  });
 }
 
 // ---------- Minijogo ----------
