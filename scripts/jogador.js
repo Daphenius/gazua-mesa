@@ -2,10 +2,10 @@
 
 import {
   ID, t, esc, cfg, REMOTOS, lerFechadura, lerChave, estaTrancada, chaveServe, nomeFechadura, iconeTipo,
-  chavesDoAtor, gazuaDoAtor, gazuaGuardada, lerGazua, usosItem, apiDados, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
+  chavesDoAtor, gazuaDoAtor, JOGOS, gazuaGuardada, lerGazua, usosItem, apiDados, aoAlcance, tokenDoUsuario, todasFechaduras, distanciaCasas
 } from "./dados.js";
-import { pedir, esperarTeste } from "./mestre.js";
-import { jogar, escolherJogo, parametros, JOGOS } from "./jogos.js";
+import { pedir, esperarResposta } from "./mestre.js";
+import { jogar } from "./jogos.js";
 
 const { ApplicationV2 } = foundry.applications.api;
 
@@ -185,7 +185,7 @@ export class JanelaFechadura extends ApplicationV2 {
     if (modo !== "desligado" && apiDados()) {
       if (!game.users.activeGM) { ui.notifications.warn(t("Aviso.SemMestre")); return null; }
       const pedidoId = foundry.utils.randomID();
-      const espera = esperarTeste(pedidoId);
+      const espera = esperarResposta(pedidoId);
       const tdoc = this.token?.document ?? this.token;
       pedir({
         tipo: "testeDC", pedidoId, uuid: this.doc.uuid, actorUuid: this.actor.uuid,
@@ -193,7 +193,9 @@ export class JanelaFechadura extends ApplicationV2 {
       });
       ui.notifications.info(t("Janela.AguardandoTeste"));
       total = await espera;
-      if (total == null) { ui.notifications.warn(t("Janela.TesteSemResposta")); return null; }
+      // null: o mestre não respondeu; false: o mestre recusou (e já avisou o motivo)
+      if (total === null) ui.notifications.warn(t("Janela.TesteSemResposta"));
+      if (typeof total !== "number") return null;
       peloMestre = true;
     } else {
       const rolado = await rolarTeste(this.actor, f, nome);
@@ -231,11 +233,12 @@ export class JanelaFechadura extends ApplicationV2 {
     const bonusGazua = lerGazua(gazua)?.bonus ?? 0;
     const nome = nomeFechadura(this.doc, f);
     const base = { uuid: this.doc.uuid, actorUuid: this.actor.uuid };
+    if (!game.users.activeGM) return ui.notifications.warn(t("Aviso.SemMestre"));
     this.ocupado = true;
     this.render();
     try {
       // Primeiro a CD: só quem passa consegue trabalhar a fechadura com a gazua
-      let margem = 0, mensagemId = null;
+      let mensagemId = null;
       if (f.testeAntes) {
         const r = await this.#fazerTeste(f, bonusGazua, "minigame");
         if (!r) return;
@@ -244,13 +247,22 @@ export class JanelaFechadura extends ApplicationV2 {
           if (!r.peloMestre) pedir({ ...base, tipo: "arrombar", via: "teste", mensagemId: r.mensagemId });
           return;
         }
-        margem = r.total - Number(f.cd);
         mensagemId = r.mensagemId;
       }
-      const tipo = escolherJogo(f);
-      const sucesso = await jogar(tipo, { parametros: parametros(f, this.actor, { margem, bonusGazua }, tipo), nome });
-      if (sucesso === null) return;   // o minijogo nem abriu (erro já avisado)
-      if (estaTrancada(this.doc)) pedir({ ...base, tipo: "arrombar", via: "minigame", sucesso, mensagemId });
+      // O mestre confere o teste, escolhe o jogo e sorteia a semente; o jogo nasce dela
+      const pedidoId = foundry.utils.randomID();
+      const espera = esperarResposta(pedidoId, 30000);
+      pedir({ ...base, tipo: "iniciarJogo", pedidoId, mensagemId });
+      const sessao = await espera;
+      if (sessao === null) ui.notifications.warn(t("Aviso.SemResposta"));
+      if (!sessao || typeof sessao !== "object") return;   // false: o mestre recusou e já avisou
+      const r = await jogar(sessao.tipo, {
+        parametros: sessao.parametros, semente: sessao.semente, decorrido: sessao.decorrido, nome
+      });
+      // não abriu (erro já avisado): a sessão fica guardada no mestre e o mesmo jogo volta na próxima tentativa
+      if (!r) return;
+      // quem decide é o mestre, refazendo estas jogadas com a mesma semente
+      if (estaTrancada(this.doc)) pedir({ ...base, tipo: "arrombar", via: "minigame", registro: r.registro });
     } catch (e) {
       console.error(`${ID} | minijogo`, e);
       ui.notifications.error(t("Aviso.ErroJogo"));

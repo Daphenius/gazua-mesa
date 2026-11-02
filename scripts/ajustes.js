@@ -1,15 +1,9 @@
 // Gazua da Mesa — configuração individual de cada minijogo (Configurações do módulo → Configurar minijogos).
 
-import { ID, t } from "./dados.js";
+import { ID, t, JOGOS, ICONES_JOGOS } from "./dados.js";
+import { jogar, parametros } from "./jogos.js";
 
 const { ApplicationV2 } = foundry.applications.api;
-
-export const LISTA = ["discos", "runas", "labirinto", "sigilo", "cristais", "canalizar"];
-
-const ICONES = {
-  discos: "fa-circle-notch", runas: "fa-hat-wizard", labirinto: "fa-bolt",
-  sigilo: "fa-pen-nib", cristais: "fa-gem", canalizar: "fa-wand-magic-sparkles"
-};
 
 // Comum a todos: ativo (entra no sorteio da Surpresa), tempo próprio (0 = o da fechadura),
 // ajuste de dificuldade (-3 a +3) e concentração extra.
@@ -35,14 +29,13 @@ export function padrao(tipo) {
 
 /** Ajustes de um minijogo, já com os padrões preenchidos. */
 export function lerAjustes(tipo) {
-  let salvo = {};
-  try { salvo = game.settings.get(ID, "minijogos")?.[tipo] ?? {}; } catch { /* antes do registro */ }
+  const salvo = game.settings.get(ID, "minijogos")?.[tipo] ?? {};
   return { ...padrao(tipo), ...salvo };
 }
 
 export function jogosAtivos() {
-  const ativos = LISTA.filter(j => lerAjustes(j).ativo);
-  return ativos.length ? ativos : LISTA;
+  const ativos = JOGOS.filter(j => lerAjustes(j).ativo);
+  return ativos.length ? ativos : JOGOS;
 }
 
 // ---------- Janela ----------
@@ -72,7 +65,7 @@ export class JanelaMinijogos extends ApplicationV2 {
           <p class="lp-dica">${dica}</p></div>`;
     };
 
-    const cartoes = LISTA.map(tipo => {
+    const cartoes = JOGOS.map(tipo => {
       const a = lerAjustes(tipo);
       const comuns = [
         campo(tipo, "ativo", "bool", a.ativo),
@@ -84,7 +77,7 @@ export class JanelaMinijogos extends ApplicationV2 {
       return `
         <details class="lp-secao lp-ajuste-jogo" data-tipo="${tipo}">
           <summary>
-            <i class="fa-solid ${ICONES[tipo]}"></i> ${t(`Jogo.${tipo}.Nome`)}
+            <i class="fa-solid ${ICONES_JOGOS[tipo]}"></i> ${t(`Jogo.${tipo}.Nome`)}
             <span class="lp-estado-jogo ${a.ativo ? "on" : ""}">${t(a.ativo ? "Ajustes.NoSorteio" : "Ajustes.ForaSorteio")}</span>
           </summary>
           <p class="lp-dica">${t(`Jogo.${tipo}.Resumo`)}</p>
@@ -117,7 +110,7 @@ export class JanelaMinijogos extends ApplicationV2 {
   /** Lê o formulário e devolve { tipo: { ...ajustes } }. */
   static lerFormulario(form) {
     const dados = {};
-    for (const tipo of LISTA) dados[tipo] = {};
+    for (const tipo of JOGOS) dados[tipo] = {};
     for (const el of form.elements) {
       if (!el.name?.includes(".")) continue;
       const [tipo, chave] = el.name.split(".");
@@ -140,7 +133,6 @@ export class JanelaMinijogos extends ApplicationV2 {
     const tipo = alvo.dataset.tipo;
     // testa com o que está na tela agora, mesmo sem salvar
     const atual = JanelaMinijogos.lerFormulario(this.form ?? this.element);
-    const { jogar, parametros } = await import("./jogos.js");
     const nivel = 5;
     const p = parametros({ nivel, cd: 15, tempo: 40 }, null, {}, tipo, atual[tipo]);
     jogar(tipo, { parametros: p, nome: t("Ajustes.FechaduraTeste") });

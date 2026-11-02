@@ -4,7 +4,7 @@ import {
   ID, SOCKET, TIPOS, t, cfg, lerFechadura, lerChave, estaTrancada, podeTerFechadura, chaveServe,
   regiaoContem, lerGazua
 } from "./dados.js";
-import { aoReceber, destrancar, trancar, souMestreAtivo } from "./mestre.js";
+import { aoReceber, destrancar, trancar, souMestreAtivo, limparSessoes } from "./mestre.js";
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
 import { configurarFechadura, configurarChave, removerFechadura, PainelFechaduras } from "./config.js";
 import { JanelaMinijogos } from "./ajustes.js";
@@ -62,6 +62,7 @@ Hooks.once("ready", () => {
     trancar: doc => (souMestreAtivo() ? trancar(doc) : null),
     lerFechadura, lerChave, estaTrancada, chaveServe
   };
+  limparSessoes().catch(e => console.error(`${ID} | sessões de minijogo`, e));
 });
 
 // ---------- Clique na porta ----------
@@ -133,7 +134,7 @@ Hooks.on("getJournalEntryContextOptions", (app, menu) => {
 // Botão no controle de tokens: painel com todas as fechaduras e chaves
 Hooks.on("getSceneControlButtons", controles => {
   if (!game.user.isGM) return;
-  const tokens = controles.tokens ?? controles.token;
+  const tokens = controles.tokens;
   if (!tokens?.tools) return;
   tokens.tools["gazua-mesa"] = {
     name: "gazua-mesa", title: "GAZUAMESA.Painel.Titulo", icon: "fa-solid fa-key",
@@ -149,8 +150,7 @@ Hooks.on("renderTokenHUD", (hud, html) => {
   if (!cfg("botaoHUD")) return;
   const token = hud.object;
   if (!token?.actor || !token.isOwner) return;
-  const el = html instanceof HTMLElement ? html : html?.[0];
-  const coluna = el?.querySelector(".col.right") ?? el?.querySelector(".col.left");
+  const coluna = html.querySelector(".col.right") ?? html.querySelector(".col.left");
   if (!coluna) return;
   const botao = document.createElement("button");
   botao.type = "button";

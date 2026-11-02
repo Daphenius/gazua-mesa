@@ -8,6 +8,13 @@ export const TIPOS = ["Wall", "Token", "Tile", "Region", "Note", "JournalEntry",
 // Fechaduras sem lugar no mapa (abrem de qualquer distância, só com chave)
 export const REMOTOS = ["JournalEntry", "JournalEntryPage"];
 
+// Os minijogos (a ordem é a das telas) e o ícone de cada um
+export const JOGOS = ["discos", "runas", "labirinto", "sigilo", "cristais", "canalizar"];
+export const ICONES_JOGOS = {
+  discos: "fa-circle-notch", runas: "fa-hat-wizard", labirinto: "fa-bolt",
+  sigilo: "fa-pen-nib", cristais: "fa-gem", canalizar: "fa-wand-magic-sparkles"
+};
+
 export const PADRAO_FECHADURA = {
   ativa: true,
   nome: "",
@@ -15,7 +22,7 @@ export const PADRAO_FECHADURA = {
   nivel: 1,
   segredos: "",
   modo: "ambos",          // ambos | minigame | teste | chave
-  minijogo: "aleatorio",  // aleatorio | discos | runas | labirinto
+  minijogo: "aleatorio",  // aleatorio ou um dos JOGOS
   tempo: 40,              // segundos do minijogo (0 = sem limite)
   testeAntes: true,       // passar na CD para poder jogar o minijogo
   cd: 15,
@@ -130,13 +137,23 @@ export function chavesDoAtor(actor) {
   return (actor?.items?.contents ?? []).filter(i => lerChave(i));
 }
 
+/**
+ * O item é Ferramentas de Ladrão? No D&D 5e, a ferramenta guarda o tipo base em
+ * system.type.baseItem ("thief"). Itens criados à mão às vezes ficam sem o tipo base;
+ * para esses, vale o nome (contém "thie" ou "ladr").
+ */
+export function ehFerramentaDeLadrao(item) {
+  if (item?.type !== "tool") return false;
+  const base = item.system?.type?.baseItem;
+  if (base) return base === "thief";
+  return /thie|ladr/i.test(item.name ?? "");
+}
+
 /** Todos os itens que servem de gazua (marcados pelo mestre e, se a opção deixar, ferramentas de ladrão). */
 export function itensGazua(actor) {
   const itens = actor?.items?.contents ?? [];
   const marcadas = itens.filter(i => lerGazua(i));
-  const ferramentas = cfg("ferramentasContam")
-    ? itens.filter(i => !lerGazua(i) && i.type === "tool" && (i.system?.type?.baseItem === "thief" || /thie|ladr/i.test(i.name)))
-    : [];
+  const ferramentas = cfg("ferramentasContam") ? itens.filter(i => !lerGazua(i) && ehFerramentaDeLadrao(i)) : [];
   return [...marcadas, ...ferramentas];
 }
 
@@ -163,13 +180,10 @@ export function gazuaGuardada(actor) {
   return cfg("gazuaEquipada") ? itensGazua(actor).find(i => !estaEquipada(i)) ?? null : null;
 }
 
-/** API de teste do Dados em Cena (ou do Epic Roll da Mesa, se ainda tiver a API). */
+/** API de teste do Dados em Cena. */
 export function apiDados() {
-  for (const id of ["dados-em-cena", "epic-roll-mesa"]) {
-    const m = game.modules.get(id);
-    if (m?.active && typeof m.api?.pedirTeste === "function") return m.api;
-  }
-  return null;
+  const m = game.modules.get("dados-em-cena");
+  return m?.active && typeof m.api?.pedirTeste === "function" ? m.api : null;
 }
 
 /** A melhor gazua do personagem (a de maior bônus). */

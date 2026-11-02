@@ -83,7 +83,12 @@
       "GazuaDesgastou": "The lockpick \"{nome}\" bent, but can take {n} more failure(s).",
       "NaoSeuPersonagem": "That character is not yours.",
       "SemRolagem": "The GM could not find your Thieves' Tools roll. Try again.",
-      "TokenNaoVinculado": "\"{item}\" was given to {ator}'s token, which is not linked to the sheet. Such items stay only on this token and disappear from the character sheet (for example, when the player logs in again). Turn on \"Link Actor Data\" for the character's token."
+      "TokenNaoVinculado": "\"{item}\" was given to {ator}'s token, which is not linked to the sheet. Such items stay only on this token and disappear from the character sheet (for example, when the player logs in again). Turn on \"Link Actor Data\" for the character's token.",
+      "SemJogo": "The GM couldn't find your lockpicking game for this lock (it may have expired). Try again.",
+      "JogoExpirou": "The lockpicking game stayed open too long and the attempt counted as a failure.",
+      "JogoEmAndamento": "You're already picking this lock with another character. Finish that game first.",
+      "SemResposta": "The GM didn't answer. Try again.",
+      "SemMinijogo": "This lock doesn't allow the lockpicking game."
     },
     "Chat": {
       "Alguem": "Someone",

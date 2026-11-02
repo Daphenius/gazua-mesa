@@ -78,6 +78,8 @@ As fechaduras são guardadas por uma proteção arcana que a gazua precisa desfa
 
 Com **Passar na CD para usar a gazua** ligado, o personagem rola Ferramentas de Ladrão antes: quem falha não chega a jogar, e cada ponto acima da CD dá +2 segundos. O nível da fechadura define a dificuldade, que fica mais fácil para quem tem bônus alto. Cada janela tem um "Como jogar".
 
+**Quem decide o minijogo é o mestre.** Ao começar, o computador do mestre escolhe o jogo e sorteia a "semente" que monta o desafio (a posição dos anéis, a sequência das runas, o desenho do labirinto…). O jogador joga a partir dessa semente e, no fim, manda as jogadas que fez; o mestre monta o mesmo desafio, refaz as jogadas e decide se a fechadura abriu. Fechar a janela no meio conta como desistência. Se a janela do jogo não abrir por algum erro, a próxima tentativa retoma o mesmo desafio, com o relógio correndo desde o começo.
+
 Em **Configurações do módulo → Configurar minijogos** (ou no painel do mestre), cada minijogo tem seus ajustes: se entra no sorteio da Surpresa, tempo próprio, ajuste de dificuldade, concentração extra e opções próprias. O botão **Testar agora** abre o jogo na hora.
 
 ### Integrações
@@ -89,8 +91,13 @@ Em **Configurações do módulo → Configurar minijogos** (ou no painel do mest
 `game.modules.get("gazua-mesa").api` traz `abrir`, `proximas`, `configurar`, `configurarChave`, `remover`, `painel`, `destrancar`, `trancar`. Os hooks `gazua-mesa.destrancou` e `gazua-mesa.trancou` disparam no mestre.
 
 ## Limitações
-- Quando a opção "Ferramentas de Ladrão contam como gazua" está ligada, o módulo reconhece o item pelo tipo base (ferramentas de ladrão do D&D 5e) ou pelo **nome** (que contenha "ladr" ou "thie"). Um item com outro nome só serve se o mestre marcá-lo como gazua.
-- O mestre confere quem está pedindo, o alcance, as tentativas e o resultado do teste de Ferramentas de Ladrão (pela rolagem no chat ou pelo Dados em Cena). O resultado do **minijogo**, porém, ainda vem do computador do jogador; isso será resolvido numa versão futura.
+- Quando a opção "Ferramentas de Ladrão contam como gazua" está ligada, o módulo reconhece a ferramenta pelo **tipo base** do D&D 5e (Ferramentas de Ladrão). Só uma ferramenta criada à mão, sem tipo base, é reconhecida pelo **nome** (que contenha "ladr" ou "thie"). Qualquer outro item só serve se o mestre marcá-lo como gazua.
+- O mestre confere quem está pedindo, o alcance, as tentativas, o resultado do teste de Ferramentas de Ladrão (pela rolagem no chat ou pelo Dados em Cena) e o resultado do **minijogo** (veja "Quem decide o minijogo" acima).
+- Um minijogo sem tempo limite pode ficar aberto até 5 minutos; passou disso, a tentativa conta como falha.
+
+## Testes
+
+As regras dos minijogos e as conferências do mestre têm testes automáticos (`tests/`), que rodam fora do Foundry com `npm test` (Node 22) e também a cada release no GitHub. Eles imitam só o necessário do Foundry: servem para pegar erros nas regras, não substituem o teste na mesa.
 
 ## Licença
 MIT.

@@ -180,6 +180,7 @@
 .lp-jogo .lp-relogio-barra div { height: 100%; width: 100%; background: linear-gradient(90deg, var(--lp-arcano), var(--lp-mana)); transition: background 0.3s; }
 .lp-jogo .lp-relogio-barra div.pouco { background: var(--lp-choque); animation: lp-piscar 0.8s infinite alternate; }
 .lp-jogo .lp-relogio em { opacity: 0.7; font-style: normal; }
+.lp-jogo .lp-relogio-txt { min-width: 2.6em; text-align: right; font-weight: 600; }
 .lp-jogo .lp-palco {
   position: relative; border-radius: 14px; padding: 10px;
   background: radial-gradient(circle at 50% 35%, #2a2d33, #121316 75%);
@@ -306,6 +307,7 @@
 .lp-sigilo .lp-no.atual .lp-glifo { stroke: #fff; }
 .lp-sigilo .lp-sigilo-info { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.85rem; }
 .lp-sigilo .lp-sigilo-info .lp-mini { flex: 0 0 auto; width: auto; padding: 2px 10px; }
+.lp-sigilo .lp-sigilo-cont { opacity: 0.85; font-variant-numeric: tabular-nums; }
 
 /* Cristais em harmonia */
 .lp-cristais .lp-cristais { display: grid; gap: 8px; max-width: 300px; margin: 0 auto; }
@@ -368,3 +370,7 @@
 
 /* Sigilo: dica de onde começar */
 .lp-sigilo .lp-no.impar circle { stroke: #ffd36b; stroke-dasharray: 3 2; }
+
+/* botão principal (Salvar) */
+.gazua-mesa .lp-principal { font-weight: 600; border-color: var(--lp-ouro); background: var(--lp-ouro-suave); }
+.gazua-mesa .lp-principal:hover { background: color-mix(in srgb, var(--lp-ouro) 32%, transparent); }

@@ -83,7 +83,12 @@
       "GazuaDesgastou": "A gazua \"{nome}\" entortou, mas aguenta mais {n} falha(s).",
       "NaoSeuPersonagem": "Esse personagem não é seu.",
       "SemRolagem": "O mestre não encontrou a sua rolagem de Ferramentas de Ladrão. Tente de novo.",
-      "TokenNaoVinculado": "\"{item}\" foi dado ao token de {ator}, que não está vinculado à ficha. Itens assim ficam só neste token e somem da ficha do personagem (por exemplo, quando o jogador entra de novo). Ligue \"Vincular dados do ator\" no token do personagem."
+      "TokenNaoVinculado": "\"{item}\" foi dado ao token de {ator}, que não está vinculado à ficha. Itens assim ficam só neste token e somem da ficha do personagem (por exemplo, quando o jogador entra de novo). Ligue \"Vincular dados do ator\" no token do personagem.",
+      "SemJogo": "O mestre não encontrou o seu minijogo nesta fechadura (ele pode ter expirado). Tente de novo.",
+      "JogoExpirou": "O minijogo ficou aberto tempo demais e a tentativa contou como falha.",
+      "JogoEmAndamento": "Você já está arrombando esta fechadura com outro personagem. Termine aquele minijogo primeiro.",
+      "SemResposta": "O mestre não respondeu. Tente de novo.",
+      "SemMinijogo": "Esta fechadura não aceita o minijogo."
     },
     "Chat": {
       "Alguem": "Alguém",

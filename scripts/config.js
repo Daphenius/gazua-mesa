@@ -2,8 +2,9 @@
 
 import {
   ID, t, esc, PADRAO_FECHADURA, PADRAO_CHAVE, PADRAO_GAZUA, lerFechadura, lerChave, lerGazua, usosItem, estaTrancada, podeTerFechadura,
-  nomeFechadura, iconeTipo, gerarSegredo, segredos, todasFechaduras, centroDoc, REMOTOS
+  nomeFechadura, iconeTipo, gerarSegredo, segredos, todasFechaduras, centroDoc, REMOTOS, JOGOS, ICONES_JOGOS
 } from "./dados.js";
+import { JanelaMinijogos } from "./ajustes.js";
 import { sincronizar, destrancar, trancar } from "./mestre.js";
 import { abrirFechadura } from "./jogador.js";
 
@@ -59,10 +60,8 @@ function aceitarArraste(raiz) {
   }
 }
 
-const elementoDo = (a, b) => (b ?? a)?.element ?? a?.target?.element ?? null;
-
 async function criarChaveItem({ nome, segredo, mestra = false }) {
-  const tipos = game.documentTypes?.Item ?? Object.keys(CONFIG.Item.dataModels ?? {});
+  const tipos = game.documentTypes.Item;
   const type = tipos.includes("loot") ? "loot" : (tipos.find(x => x !== "base") ?? "base");
   const item = await Item.implementation.create({
     name: nome,
@@ -155,12 +154,7 @@ export async function configurarFechadura(doc) {
 
   const jogos = [
     { v: "aleatorio", icone: "fa-shuffle" },
-    { v: "discos", icone: "fa-circle-notch" },
-    { v: "runas", icone: "fa-hat-wizard" },
-    { v: "labirinto", icone: "fa-bolt" },
-    { v: "sigilo", icone: "fa-pen-nib" },
-    { v: "cristais", icone: "fa-gem" },
-    { v: "canalizar", icone: "fa-wand-magic-sparkles" }
+    ...JOGOS.map(v => ({ v, icone: ICONES_JOGOS[v] }))
   ].map(j => `
     <label class="lp-modo lp-jogo-op">
       <input type="radio" name="minijogo" value="${j.v}" ${j.v === (f.minijogo || "aleatorio") ? "checked" : ""}>
@@ -232,8 +226,8 @@ export async function configurarFechadura(doc) {
     content,
     buttons,
     rejectClose: false,
-    render: (a, b) => {
-      const el = elementoDo(a, b);
+    render: (evento, dialogo) => {
+      const el = dialogo.element;
       if (!el) return;
       aceitarArraste(el);
 
@@ -407,8 +401,8 @@ export async function configurarChave(item) {
     content,
     buttons,
     rejectClose: false,
-    render: (a, b) => {
-      const el = elementoDo(a, b);
+    render: (evento, dialogo) => {
+      const el = dialogo.element;
       if (!el) return;
       const mudar = () => {
         const tipo = el.querySelector("input[name=tipoItem]:checked")?.value;
@@ -579,13 +573,12 @@ export class PainelFechaduras extends ApplicationV2 {
     this.render();
   }
 
-  static async #minijogos() {
-    const { JanelaMinijogos } = await import("./ajustes.js");
+  static #minijogos() {
     new JanelaMinijogos().render({ force: true });
   }
 
   static async #novaGazua() {
-    const tipos = game.documentTypes?.Item ?? [];
+    const tipos = game.documentTypes.Item;
     const type = tipos.includes("tool") ? "tool" : tipos.includes("loot") ? "loot" : (tipos.find(x => x !== "base") ?? "base");
     const item = await Item.implementation.create({
       name: t("Painel.NomeNovaGazua"), type, img: "icons/tools/hand/lockpicks-steel-grey.webp",

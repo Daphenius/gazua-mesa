@@ -3,8 +3,10 @@
 
 import {
   ID, SOCKET, REMOTOS, t, esc, cfg, lerFechadura, lerChave, lerGazua, usosItem, estaTrancada, chaveServe, nomeFechadura, apiDados,
-  aoAlcance, gazuaDoAtor
+  aoAlcance, gazuaDoAtor, todasFechaduras
 } from "./dados.js";
+import { parametros, escolherJogo } from "./jogos.js";
+import { conferir, novaSemente } from "./logica.js";
 
 const ESTADO = () => CONST.WALL_DOOR_STATES;
 const NIVEL = () => CONST.DOCUMENT_OWNERSHIP_LEVELS;
@@ -39,19 +41,20 @@ export async function mostrarDocumento(uuid) {
   return doc.sheet?.render(true);
 }
 
-// Testes pedidos ao Dados em Cena: o jogador espera aqui a resposta do mestre
-const testesPendentes = new Map();
+// Pedidos que esperam resposta do mestre (teste pelo Dados em Cena, início do minijogo).
+// Sem resposta no prazo, a promessa termina com null.
+const pendentes = new Map();
 
-export function esperarTeste(pedidoId, tempo = 150000) {
+export function esperarResposta(pedidoId, tempo = 150000) {
   return new Promise(resolve => {
-    const relogio = setTimeout(() => { testesPendentes.delete(pedidoId); resolve(null); }, tempo);
-    testesPendentes.set(pedidoId, total => { clearTimeout(relogio); testesPendentes.delete(pedidoId); resolve(total); });
+    const relogio = setTimeout(() => { pendentes.delete(pedidoId); resolve(null); }, tempo);
+    pendentes.set(pedidoId, dados => { clearTimeout(relogio); pendentes.delete(pedidoId); resolve(dados); });
   });
 }
 
-function responderTeste(userId, pedidoId, total) {
-  if (userId === game.user.id) return testesPendentes.get(pedidoId)?.(total);
-  game.socket.emit(SOCKET, { tipo: "resultadoTeste", para: userId, pedidoId, total });
+function responder(userId, pedidoId, dados) {
+  if (userId === game.user.id) return pendentes.get(pedidoId)?.(dados);
+  game.socket.emit(SOCKET, { tipo: "resposta", para: userId, pedidoId, dados });
 }
 
 const NIVEIS_AVISO = ["info", "warn", "error"];
@@ -67,7 +70,7 @@ export function aoReceber(msg, senderId) {
     return ui.notifications[nivel](t(msg.chave, msg.dados));
   }
   if (msg.tipo === "mostrar" && msg.para?.includes(game.user.id)) return mostrarDocumento(msg.uuid);
-  if (msg.tipo === "resultadoTeste" && msg.para === game.user.id) return testesPendentes.get(msg.pedidoId)?.(msg.total);
+  if (msg.tipo === "resposta" && msg.para === game.user.id) return pendentes.get(msg.pedidoId)?.(msg.dados);
 }
 
 // ---------- Chat ----------
@@ -191,8 +194,7 @@ export async function destrancar(doc, { actor = null, userId = null, como = "" }
     : t("Chat.DestrancouSimples", { nome });
   let html = `<i class="fa-solid fa-lock-open"></i> ${texto}`;
   if (f.mensagem) {
-    const TE = foundry.applications?.ux?.TextEditor?.implementation ?? globalThis.TextEditor;
-    html += `<p class="lp-msg">${await TE.enrichHTML(f.mensagem)}</p>`;
+    html += `<p class="lp-msg">${await foundry.applications.ux.TextEditor.implementation.enrichHTML(f.mensagem)}</p>`;
   }
   await anunciar(html, actor);
 
@@ -269,9 +271,65 @@ async function desgastarGazua(uuid, actor, userId, via) {
 
 // Rolagens de chat já aproveitadas (cada rolagem só vale para uma tentativa)
 const rolagensUsadas = new Set();
-// Quem passou no teste antes do minijogo (pelo Dados em Cena): "userId:uuid" -> quando
+// Quem passou no teste antes do minijogo (pelo Dados em Cena): "userId:uuid" -> { quando, total }
 const liberados = new Map();
 const VALIDADE = 10 * 60000;
+
+// ---------- Sessões de minijogo ----------
+// Ao começar um minijogo, o mestre sorteia a semente e grava na fechadura (flags.gazua-mesa.jogos.<userId>):
+// { actorUuid, tipo, semente, parametros, inicio, validade }. O jogador recebe a semente, joga e devolve
+// as jogadas; o mestre refaz tudo com a mesma semente e decide. A sessão acaba quando o resultado chega
+// (fechar a janela conta como desistência) ou quando passa da validade (conta como falha).
+
+const ESPERA_JOGO = 5 * 60000;    // validade mínima de uma sessão
+const FOLGA = 20000;              // atraso aceito entre o sorteio e a janela abrir no jogador
+const relogios = new Map();       // "userId:uuid" -> setTimeout da expiração
+
+export const lerSessao = (doc, userId) => doc?.flags?.[ID]?.jogos?.[userId] ?? null;
+
+async function apagarSessao(doc, userId) {
+  const k = `${userId}:${doc.uuid}`;
+  clearTimeout(relogios.get(k));
+  relogios.delete(k);
+  if (lerSessao(doc, userId)) await doc.unsetFlag(ID, `jogos.${userId}`);
+}
+
+function agendarExpiracao(doc, userId, s) {
+  const k = `${userId}:${doc.uuid}`;
+  clearTimeout(relogios.get(k));
+  const espera = Math.max(0, s.validade - Date.now()) + 1000;
+  relogios.set(k, setTimeout(() => {
+    relogios.delete(k);
+    expirar(doc, userId, s).catch(e => console.error(`${ID} | expirar minijogo`, e));
+  }, espera));
+}
+
+/** Sessão que passou da validade sem resultado: apaga e conta como falha. */
+async function expirar(doc, userId, s) {
+  if (!souMestreAtivo() || lerSessao(doc, userId)?.semente !== s.semente) return;
+  await apagarSessao(doc, userId);
+  const f = lerFechadura(doc);
+  if (!f || !estaTrancada(doc, f)) return;
+  const actor = await fromUuid(String(s.actorUuid ?? ""));
+  if (!actor) return;
+  avisar(userId, "Aviso.JogoExpirou", {}, "warn");
+  await falhar(doc, f, actor, userId, gazuaDoAtor(actor)?.uuid, "minigame");
+}
+
+/** Ao entrar (ou trocar de mestre): sessões vencidas viram falha; as válidas voltam a ter relógio. */
+export async function limparSessoes() {
+  if (!souMestreAtivo()) return;
+  const docs = [];
+  for (const cena of game.scenes ?? []) docs.push(...todasFechaduras(cena).filter(d => d.parent === cena));
+  docs.push(...todasFechaduras(null));
+  for (const doc of new Set(docs)) {
+    for (const [userId, s] of Object.entries(doc.flags?.[ID]?.jogos ?? {})) {
+      if (!s) continue;
+      if (Date.now() > s.validade) await expirar(doc, userId, s).catch(e => console.error(`${ID} | expirar minijogo`, e));
+      else agendarExpiracao(doc, userId, s);
+    }
+  }
+}
 
 /** Lê o total da rolagem de Ferramentas de Ladrão feita pelo próprio remetente; null se não vale. */
 function lerRolagem(mensagemId, user) {
@@ -310,7 +368,11 @@ export async function processar(pedido, userId) {
     const doc = await fromUuid(String(pedido.uuid ?? ""));
     const f = lerFechadura(doc);
     const actor = pedido.actorUuid ? await fromUuid(String(pedido.actorUuid)) : null;
-    const desistir = () => { if (pedido.tipo === "testeDC") responderTeste(userId, pedido.pedidoId, null); };
+    // pedidos que esperam resposta recebem "não" (false; null fica para quando o mestre não responde)
+    const desistir = () => {
+      if (pedido.tipo === "testeDC") responder(userId, pedido.pedidoId, false);
+      if (pedido.tipo === "iniciarJogo") responder(userId, pedido.pedidoId, false);
+    };
     if (!user) return;
     if (!doc || !f) { desistir(); return avisar(userId, "Aviso.SemFechadura", {}, "warn"); }
     if (!estaTrancada(doc, f)) { desistir(); return avisar(userId, "Aviso.JaAberta"); }
@@ -341,14 +403,16 @@ export async function processar(pedido, userId) {
         });
       } catch (e) { console.error(`${ID} | Dados em Cena`, e); }
       const total = Number.isFinite(Number(r?.total)) ? Number(r.total) : null;
-      responderTeste(userId, pedido.pedidoId, total);
+      responder(userId, pedido.pedidoId, total);
       if (total == null) return;
       // o mestre já tem o resultado: decide aqui mesmo
       const passou = total >= Number(f.cd);
       if (!passou) return falhar(doc, f, actor, userId, prep.gazua?.uuid, "teste");
-      if (pedido.finalidade === "minigame") { liberados.set(`${userId}:${doc.uuid}`, Date.now()); return; }
+      if (pedido.finalidade === "minigame") { liberados.set(`${userId}:${doc.uuid}`, { quando: Date.now(), total }); return; }
       return destrancar(doc, { actor, userId, como: t("Chat.ComTeste") });
     }
+
+    if (pedido.tipo === "iniciarJogo") return iniciarJogo(pedido, doc, f, actor, user, prepararArrombar(), desistir);
 
     if (pedido.tipo === "chave") {
       const item = await fromUuid(String(pedido.itemUuid ?? ""));
@@ -372,9 +436,12 @@ export async function processar(pedido, userId) {
     }
 
     if (pedido.tipo === "arrombar") {
+      const via = pedido.via === "minigame" ? "minigame" : "teste";
+      // minijogo: a sessão acaba aqui, dê o resultado que der
+      const sessao = via === "minigame" ? lerSessao(doc, userId) : null;
+      if (sessao) await apagarSessao(doc, userId);
       const prep = prepararArrombar();
       if (prep.erro) return avisar(userId, prep.erro, {}, "warn");
-      const via = pedido.via === "minigame" ? "minigame" : "teste";
       let sucesso;
       if (via === "teste") {
         // o veredito sai da rolagem no chat, lida aqui no mestre
@@ -382,18 +449,9 @@ export async function processar(pedido, userId) {
         if (total == null) return avisar(userId, "Aviso.SemRolagem", {}, "warn");
         sucesso = total + prep.bonus >= Number(f.cd);
       } else {
-        // minijogo: o resultado ainda vem do cliente; o mestre confere ao menos o teste antes
-        if (f.testeAntes && !user.isGM) {
-          const chave = `${userId}:${doc.uuid}`;
-          let passou = Date.now() - (liberados.get(chave) ?? -Infinity) <= VALIDADE;
-          if (!passou) {
-            const total = lerRolagem(pedido.mensagemId, user);
-            passou = total != null && total + prep.bonus >= Number(f.cd);
-          }
-          if (!passou) return avisar(userId, "Aviso.SemRolagem", {}, "warn");
-          liberados.delete(chave);
-        }
-        sucesso = pedido.sucesso === true;
+        // minijogo: o mestre refaz as jogadas com a semente que ele mesmo sorteou
+        if (!sessao || sessao.actorUuid !== actor.uuid) return avisar(userId, "Aviso.SemJogo", {}, "warn");
+        sucesso = resultadoJogo(sessao, pedido.registro);
       }
       const como = t(via === "minigame" ? "Chat.ComGazua" : "Chat.ComTeste");
       if (sucesso) return destrancar(doc, { actor, userId, como });
@@ -401,7 +459,76 @@ export async function processar(pedido, userId) {
     }
   } catch (e) {
     console.error(`${ID} | pedido`, pedido, e);
-    if (pedido.tipo === "testeDC") responderTeste(userId, pedido.pedidoId, null);
+    if (pedido.tipo === "testeDC" || pedido.tipo === "iniciarJogo") responder(userId, pedido.pedidoId, false);
     avisar(userId, "Aviso.Erro", {}, "error");
   }
+}
+
+// ---------- Minijogo ----------
+
+/** Total do "teste antes" que o mestre aceita (Dados em Cena ou rolagem no chat); null se não há. */
+function totalTesteAntes(pedido, doc, user, bonus) {
+  const chave = `${user.id}:${doc.uuid}`;
+  const lib = liberados.get(chave);
+  liberados.delete(chave);
+  if (lib && Date.now() - lib.quando <= VALIDADE) return lib.total;
+  const total = lerRolagem(pedido.mensagemId, user);
+  return total == null ? null : total + bonus;
+}
+
+/** Começa (ou retoma) o minijogo: sorteia a semente, grava a sessão e manda ao jogador. */
+async function iniciarJogo(pedido, doc, f, actor, user, prep, desistir) {
+  const userId = user.id;
+  const nega = (chave, dados = {}) => { desistir(); return avisar(userId, chave, dados, "warn"); };
+  if (prep.erro) return nega(prep.erro);
+  if (f.modo !== "minigame" && f.modo !== "ambos") return nega("Aviso.SemMinijogo");
+
+  // sessão anterior: válida → o mesmo jogo continua (mesma semente, mesmo relógio); vencida → falha
+  const antiga = lerSessao(doc, userId);
+  if (antiga) {
+    if (Date.now() <= antiga.validade) {
+      if (antiga.actorUuid !== actor.uuid) return nega("Aviso.JogoEmAndamento");
+      agendarExpiracao(doc, userId, antiga);
+      return responder(userId, pedido.pedidoId, {
+        tipo: antiga.tipo, semente: antiga.semente, parametros: antiga.parametros,
+        decorrido: (Date.now() - antiga.inicio) / 1000
+      });
+    }
+    await expirar(doc, userId, antiga);
+    return nega("Aviso.JogoExpirou");
+  }
+
+  // o teste antes: quem decide é o total que o mestre leu, e a margem dá tempo extra
+  let margem = 0;
+  if (f.testeAntes) {
+    const total = totalTesteAntes(pedido, doc, user, prep.bonus);
+    if (total == null && !user.isGM) return nega("Aviso.SemRolagem");
+    if (total != null && total < Number(f.cd)) {
+      desistir();
+      return falhar(doc, f, actor, userId, prep.gazua?.uuid, "teste");
+    }
+    margem = total == null ? 0 : total - Number(f.cd);
+  }
+
+  const tipo = escolherJogo(f);
+  const p = parametros(f, actor, { margem, bonusGazua: prep.bonus }, tipo);
+  const agora = Date.now();
+  const sessao = {
+    actorUuid: actor.uuid, tipo, semente: novaSemente(), parametros: p, inicio: agora,
+    validade: agora + Math.max(ESPERA_JOGO, (p.tempo > 0 ? p.tempo * 1000 : 0) + FOLGA)
+  };
+  await doc.setFlag(ID, `jogos.${userId}`, sessao);
+  agendarExpiracao(doc, userId, sessao);
+  responder(userId, pedido.pedidoId, { tipo, semente: sessao.semente, parametros: p, decorrido: 0 });
+}
+
+/** Refaz as jogadas recebidas com a semente da sessão e diz se a fechadura abriu. */
+function resultadoJogo(sessao, registro) {
+  const agora = Date.now();
+  if (agora > sessao.validade) return false;
+  const segundos = (agora - sessao.inicio) / 1000;
+  const p = sessao.parametros ?? {};
+  // o tempo do jogo conta do sorteio até o resultado chegar (com folga para a rede e a janela abrir)
+  if (p.tempo > 0 && segundos > p.tempo + FOLGA / 1000) return false;
+  return conferir(sessao.tipo, p, sessao.semente, registro, { segundos });
 }

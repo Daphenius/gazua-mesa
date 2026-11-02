@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.6.0
+- **O mestre decide o minijogo**: o computador do mestre escolhe o jogo e sorteia a "semente" que monta o desafio; o jogador joga a partir dela e manda as jogadas; o mestre monta o mesmo desafio, refaz as jogadas e decide se abriu. Antes, quem dizia "abri" era o computador do jogador.
+- O "teste antes" do minijogo agora é conferido no começo do jogo, e o tempo extra pela margem na CD é calculado pelo mestre.
+- A sessão do minijogo fica guardada na fechadura: fechar a janela conta como desistência; se a janela não abrir por erro, a próxima tentativa retoma o mesmo desafio; um jogo largado aberto por mais de 5 minutos (ou além do tempo limite) conta como falha.
+- No Selo rúnico, os toques só valem depois de o selo mostrar a sequência.
+- **Ferramentas de Ladrão** são reconhecidas pelo tipo base do D&D 5e; o nome do item só vale para ferramentas sem tipo base.
+- Botão **Salvar** dos ajustes dos minijogos, número do relógio e contador do Sigilo ganharam o estilo que faltava.
+- **Só Foundry 14**: saiu o código de compatibilidade com versões antigas (jQuery no HUD do token, controles antigos da cena, TextEditor antigo, diálogos antigos, tipos de item antigos e a API do antigo Epic Roll da Mesa; agora só o Dados em Cena).
+- Por dentro: as regras dos 6 minijogos foram separadas da tela (novo arquivo `scripts/logica.js`, sem nada do Foundry), o que também acabou com a gambiarra da resistência do Fio de mana; a lista e os ícones dos minijogos ficam num lugar só; imports carregados direto, sem carregamento tardio.
+- **Testes automáticos** (`npm test`): conferências do mestre (remetente, dono do personagem, alcance, tentativas, modo só chave), fechaduras trancadas em porta, baú e diário, desgaste da gazua e o sorteio dos 6 minijogos. A release no GitHub só sai se eles passarem.
+
 ## v1.5.2
 - **Quem decide é o mestre**: o resultado do teste de Ferramentas de Ladrão agora é conferido no mestre, pela rolagem que aparece no chat (ou pelo Dados em Cena), e não mais pelo que o jogador manda. Cada rolagem vale para uma tentativa só. O mestre também confere se o personagem é mesmo do jogador que pediu, se está ao alcance da fechadura, se ainda tem tentativas e se tem gazua quando a fechadura exige.
 - O resultado do minijogo ainda vem do jogador (fica para uma versão futura); mas agora o mestre exige a rolagem do "teste antes", quando ela está ligada.

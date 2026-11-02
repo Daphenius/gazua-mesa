@@ -25,6 +25,13 @@ jobs:
           fi
           grep -q "releases/download/v${VER}/gazua-mesa.zip" module.json || { echo "O link de download do module.json não aponta para v${VER}."; exit 1; }
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Rodar os testes
+        run: npm test
+
       - name: Montar o ZIP (module.json na raiz)
         run: zip -r gazua-mesa.zip module.json scripts styles lang README.md CHANGELOG.md LICENSE
 
