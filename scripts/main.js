@@ -8,6 +8,7 @@ import { aoReceber, destrancar, trancar, souMestreAtivo, limparSessoes, encerrar
 import { abrirFechadura, abrirProximas, atualizarJanelas } from "./jogador.js";
 import { configurarFechadura, configurarChave, removerFechadura, PainelFechaduras } from "./config.js";
 import { JanelaMinijogos } from "./ajustes.js";
+import "./destacar.js";
 
 Hooks.once("init", () => {
   const reg = (nome, dados) => game.settings.register(ID, nome, {

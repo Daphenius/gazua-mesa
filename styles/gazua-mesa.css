@@ -374,3 +374,59 @@
 /* botão principal (Salvar) */
 .gazua-mesa .lp-principal { font-weight: 600; border-color: var(--lp-ouro); background: var(--lp-ouro-suave); }
 .gazua-mesa .lp-principal:hover { background: color-mix(in srgb, var(--lp-ouro) 32%, transparent); }
+
+/* ---------- Janela desacoplada e janelas redimensionáveis ---------- */
+/* O conteúdo mede a própria largura para se reorganizar (container queries). */
+.gazua-mesa .window-content { container: lp-tela / inline-size; }
+
+/* Desacoplada: a janela ocupa toda a janela do navegador e cresce junto com ela. */
+.gazua-mesa.lp-destacada {
+  position: fixed !important; inset: 0 !important; left: 0 !important; top: 0 !important;
+  width: 100% !important; height: 100% !important;
+  min-width: 0 !important; min-height: 0 !important; max-width: none !important; max-height: none !important;
+  margin: 0 !important; transform: none !important; border-radius: 0; box-sizing: border-box !important;
+  display: flex !important; flex-direction: column;
+}
+.gazua-mesa.lp-destacada > .window-header { flex: 0 0 auto; }
+.gazua-mesa.lp-destacada > .window-content,
+.gazua-mesa.lp-destacada > form > .window-content {
+  flex: 1 1 auto; min-height: 0; max-height: none !important; overflow-y: auto;
+}
+.gazua-mesa.lp-destacada > form { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.gazua-mesa.lp-destacada .window-resize-handle { display: none; }
+
+/* Conteúdo centralizado, sem esticar demais em telas muito largas */
+.lp-config { width: 100%; box-sizing: border-box; }
+.gazua-mesa.lp-destacada .lp-config { max-width: 1400px; margin-inline: auto; }
+.gazua-mesa.lp-destacada.lp-janela .window-content > *,
+.gazua-mesa.lp-destacada.lp-painel .window-content > * { max-width: 900px; margin-inline: auto; }
+.gazua-mesa.lp-destacada .form-footer { max-width: 1400px; width: 100%; margin-inline: auto; }
+
+/* Minijogos: o tabuleiro cresce com a janela, sem passar da altura dela */
+.gazua-mesa.lp-destacada.lp-jogo .lp-mg { max-width: min(100%, 900px); margin-inline: auto; }
+.gazua-mesa.lp-destacada .lp-discos-svg,
+.gazua-mesa.lp-destacada .lp-lab-svg,
+.gazua-mesa.lp-destacada .lp-sigilo-svg { max-width: min(100%, 62vh); }
+.gazua-mesa.lp-destacada .lp-cristais .lp-cristais { max-width: min(100%, 52vh); }
+
+/* Largura média: rótulos mais largos e os 4 modos lado a lado */
+@container lp-tela (min-width: 760px) {
+  .lp-config .lp-linha { grid-template-columns: 12rem 1fr; }
+  .gazua-mesa .lp-modos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gazua-mesa .lp-modos.lp-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Largura grande: as seções da fechadura e dos ajustes viram duas colunas */
+@container lp-tela (min-width: 1040px) {
+  .lp-config {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start; grid-auto-flow: row dense;
+  }
+  .lp-config > .lp-cabeca, .lp-config > .lp-aviso, .lp-config > .lp-efeitos,
+  .lp-config > .lp-rodape, .lp-config > :not(.lp-secao):not(.lp-cabeca) { grid-column: 1 / -1; }
+  .gazua-mesa .lp-modos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gazua-mesa .lp-modos.lp-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lp-config .lp-linha { grid-template-columns: 10rem 1fr; }
+  .lp-painel .window-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8rem; align-items: start; }
+  .lp-painel section + section { margin-top: 0; }
+}

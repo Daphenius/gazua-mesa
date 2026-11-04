@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.3
+- **Janela desacoplada**: ao usar "Desacoplar janela" do Foundry, as janelas da Gazua (fechadura, chave, painel, ajustes, janela do jogador e minijogos) passam a ocupar a janela inteira e crescem junto quando você estica a janela. Ao reacoplar, voltam ao normal.
+- **Organização conforme a largura**: em janelas mais largas, os 4 modos de abrir ficam lado a lado; em janelas bem largas, as seções da fechadura e dos ajustes viram duas colunas. Os tabuleiros dos minijogos também crescem, sem passar da altura da janela.
+
 ## v1.6.2
 - **Teste pelo Dados em Cena**: quando a rolagem chega, o mestre confere de novo se o personagem ainda é do jogador e ainda está ao alcance da fechadura. Quem se afastou durante a rolagem não abre a porta, não registra falha, não quebra gazua e não fica liberado para o minijogo.
 - 5 testes novos para esse caso (55 no total).
