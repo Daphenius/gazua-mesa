@@ -13,11 +13,16 @@ function conferir(el) {
   if (el.classList.contains(CLASSE) !== fora) el.classList.toggle(CLASSE, fora);
 }
 
-/** Confere já e mais duas vezes logo depois (a mudança de janela não é instantânea). */
+/** Confere já e mais duas vezes logo depois (a mudança de janela não é instantânea).
+ *  Arrastar a janela muda o estilo dela a cada movimento do mouse: enquanto a conferência
+ *  marcada ainda não rodou, não marca outra (antes eram dois timers por movimento). */
+const agendados = new WeakSet();
 function conferirLogo(el) {
   conferir(el);
+  if (agendados.has(el)) return;
+  agendados.add(el);
   setTimeout(() => conferir(el), 60);
-  setTimeout(() => conferir(el), 400);
+  setTimeout(() => { agendados.delete(el); conferir(el); }, 400);
 }
 
 /** Começa a vigiar a janela de uma aplicação do módulo. */

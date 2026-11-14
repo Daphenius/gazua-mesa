@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.4
+- Atualizado para o Foundry VTT 14.370 (versão estável mais recente).
+- **Desempenho:** arrastar uma janela da Gazua não cria mais dois temporizadores a cada movimento do mouse; a conferência de "janela desacoplada" agora roda no máximo uma vez por vez.
+
 ## v1.6.3
 - **Janela desacoplada**: ao usar "Desacoplar janela" do Foundry, as janelas da Gazua (fechadura, chave, painel, ajustes, janela do jogador e minijogos) passam a ocupar a janela inteira e crescem junto quando você estica a janela. Ao reacoplar, voltam ao normal.
 - **Organização conforme a largura**: em janelas mais largas, os 4 modos de abrir ficam lado a lado; em janelas bem largas, as seções da fechadura e dos ajustes viram duas colunas. Os tabuleiros dos minijogos também crescem, sem passar da altura da janela.
